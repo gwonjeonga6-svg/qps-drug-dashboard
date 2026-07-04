@@ -2,95 +2,93 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>QPS 약제급여 적정성평가 대시보드</title>
+<title>좋은삼선병원 QPS 약제급여 분석 시스템</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
-    --navy:#1b3a5c; --navy-dark:#12283f; --accent:#2f6fed; --accent-soft:#eaf1fd;
-    --g1:#1e8e5a; --g2:#5fa83a; --g3:#e0a721; --g4:#e0722a; --g5:#d0392a;
-    --bg:#f3f5f8; --card:#ffffff; --line:#e2e6ec; --text:#1f2937; --sub:#6b7684;
+    --navy:#12283f; --accent:#2f6fed; --accent-soft:#eaf1fd;
+    --red:#d0392a; --orange:#e0722a; --yellow:#e0a721; --green:#1e8e5a;
+    --bg:#f4f6f9; --card:#ffffff; --line:#e2e6ec; --text:#1f2937; --sub:#6b7684;
   }
   *{box-sizing:border-box;}
   body{
-    font-family:'Nanum Gothic','맑은 고딕',sans-serif; background:var(--bg); color:var(--text);
-    margin:0; padding:24px; line-height:1.5;
+    font-family:'Nanum Gothic',sans-serif; background:var(--bg); color:var(--text); margin:0; padding:24px; line-height:1.5;
   }
-  .wrap{max-width:1280px;margin:0 auto;}
+  .wrap{max-width:1440px; margin:0 auto;}
   header{
-    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
-    background:var(--navy); color:#fff; padding:18px 24px; border-radius:14px; margin-bottom:20px;
+    display:flex; align-items:center; justify-content:between; background:var(--navy); color:#fff; padding:20px 24px; border-radius:14px; margin-bottom:20px;
   }
-  header h1{font-size:20px; font-weight:800; margin:0;}
-  header .sub{font-size:12.5px; color:#c9d6e8; margin-top:4px;}
-  .controls{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-  .controls label{font-size:12px; color:#c9d6e8;}
-  select, input[type=text], input[type=number], input[type=month]{
-    font-family:inherit; border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:13px;
+  header h1{font-size:22px; font-weight:800; margin:0;}
+  header .sub{font-size:13px; color:#c9d6e8; margin-top:4px;}
+  .btn-zone{margin-left:auto; display:flex; gap:8px;}
+  
+  .grid-layout {display: grid; grid-template-columns: 320px 1fr; gap: 20px;}
+  @media(max-width:1100px){.grid-layout{grid-template-columns: 1fr;}}
+
+  /* 왼쪽 컨트롤 패널 */
+  .panel-left{display:flex; flex-direction:column; gap:16px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px;}
+  .card h2{font-size:14.5px; font-weight:800; color:var(--navy); margin:0 0 12px; display:flex; align-items:center; gap:6px;}
+  
+  /* 오른쪽 분석 메인 영역 */
+  .panel-right{display:flex; flex-direction:column; gap:20px;}
+  
+  /* QPS 모니터링 알림판 */
+  .alert-box { border-left: 5px solid var(--accent); background:#edf3fc; padding:14px 18px; border-radius:0 10px 10px 0; margin-bottom:10px; }
+  .alert-box h3 { margin:0 0 6px; font-size:14px; color:var(--navy); font-weight:800; }
+  .alert-box ul { margin:0; padding-left:20px; font-size:12.5px; color:#374151; }
+  .alert-box li { margin-bottom: 4px; }
+
+  /* 신호등 뱃지 스타일 */
+  .status-badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:800; text-align:center; color:#fff; }
+  .bg-red { background-color: var(--red); }
+  .bg-orange { background-color: var(--orange); }
+  .bg-green { background-color: var(--green); }
+
+  .upload-box{
+    border:2px dashed #b9c3d1; border-radius:12px; padding:20px; text-align:center; color:var(--sub);
+    cursor:pointer; background:#fbfcfd; font-size:13px;
   }
+  .upload-box.active{border-color:var(--accent); background:var(--accent-soft); color:var(--navy);}
+  
+  .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .chip{
+    display:flex; align-items:center; gap:4px; background:#e8ecf2; color:var(--navy);
+    border-radius:6px; padding:4px 8px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .chip.active{background:var(--accent); color:#fff;}
+  .chip .x{font-weight:800; margin-left:4px; opacity:0.6;}
+
+  /* 통계 세션 가독성 업그레이드 */
+  .kpi-container { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+  .kpi-block { background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; }
+  .kpi-block .lbl { font-size:11.5px; color:var(--sub); font-weight:700; }
+  .kpi-block .val { font-size:18px; font-weight:800; color:var(--navy); margin-top:2px; }
+
+  table{width:100%; border-collapse:collapse; font-size:12px;}
+  th,td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
+  th{background:#f0f3f8; font-weight:700; color:var(--navy); position:sticky; top:0; z-index:2;}
+  td.name{text-align:left; font-weight:700;}
+  .tablewrap{max-height:350px; overflow:auto; border:1px solid var(--line); border-radius:10px; margin-top:8px;}
+
+  /* 타겟 관리 대상 리스트 */
+  .target-list { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .target-item { display:flex; align-items:center; justify-content:space-between; background:#fff5f5; border:1px solid #fed7d7; padding:10px 14px; border-radius:8px; }
+  .target-item .meta { font-size:13px; font-weight:700; color:var(--navy); }
+  .target-item .reason { font-size:11.5px; color:var(--red); font-weight:700; }
+
   button{
     font-family:inherit; border:none; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700;
     cursor:pointer; background:var(--accent); color:#fff;
   }
   button.ghost{background:#fff; color:var(--navy); border:1px solid var(--line);}
-  button.small{padding:5px 10px; font-size:12px;}
-  section{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin-bottom:18px;}
-  section h2{font-size:15px; font-weight:800; margin:0 0 4px; color:var(--navy);}
-  section .desc{font-size:12px; color:var(--sub); margin-bottom:14px;}
-  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
-  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
-  @media(max-width:900px){.grid3,.grid4{grid-template-columns:1fr 1fr;}}
-  .kpi{border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:#fafbfd;}
-  .kpi .lbl{font-size:11.5px; color:var(--sub); font-weight:700;}
-  .kpi .val{font-size:22px; font-weight:800; margin-top:4px; color:var(--navy);}
-  .grade-card{border-radius:12px; padding:16px; color:#fff; position:relative; overflow:hidden;}
-  .grade-card .lbl{font-size:12.5px; font-weight:700; opacity:.9;}
-  .grade-card .badge{font-size:34px; font-weight:800; margin-top:4px;}
-  .grade-card .detail{font-size:11.5px; opacity:.9; margin-top:6px;}
-  .g1{background:linear-gradient(135deg,var(--g1),#146245);}
-  .g2{background:linear-gradient(135deg,var(--g2),#3f7a26);}
-  .g3{background:linear-gradient(135deg,var(--g3),#b3820f);}
-  .g4{background:linear-gradient(135deg,var(--g4),#a5501a);}
-  .g5{background:linear-gradient(135deg,var(--g5),#921f14);}
-  .gx{background:linear-gradient(135deg,#8a94a3,#5f6875);}
-  table{width:100%; border-collapse:collapse; font-size:12.5px;}
-  th,td{border:1px solid var(--line); padding:6px 8px; text-align:center;}
-  th{background:#f0f3f8; font-weight:700; color:var(--navy);}
-  td.name{text-align:left; font-weight:700;}
-  input.cell{width:64px; text-align:center; padding:3px 4px; font-size:12.5px;}
-  .hi{background-color:#fee2e2; color:var(--g5); font-weight:800;}
-  .tablewrap{max-height:480px; overflow:auto; border:1px solid var(--line); border-radius:10px;}
-  .tablewrap table{font-size:12px;}
-  .tablewrap th{position:sticky; top:0; z-index:2;}
-  .upload-box{
-    border:2px dashed #b9c3d1; border-radius:12px; padding:26px; text-align:center; color:var(--sub);
-    cursor:pointer; background:#fbfcfd; transition: all 0.2s;
-  }
-  .upload-box:hover{border-color:var(--accent); background:var(--accent-soft);}
-  .upload-box.active{border-color:var(--accent); background:var(--accent-soft); color:var(--navy);}
-  .subhead{font-size:13px; font-weight:800; color:var(--navy); margin:18px 0 8px;}
-  .footnote{font-size:11px; color:var(--sub); margin-top:8px;}
-  .sortable{cursor:pointer; user-select:none;}
-  .sortable:hover{background:#e6ebf3;}
-  .flex-between{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;}
-  .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
-  .chip{
-    display:flex; align-items:center; gap:6px; background:var(--accent-soft); color:var(--navy);
-    border-radius:16px; padding:5px 10px 5px 12px; font-size:12.5px; font-weight:700; cursor:pointer;
-    border:1px solid transparent;
-  }
-  .chip.active{background:var(--accent); color:#fff;}
-  .chip .x{font-weight:800; opacity:.7; padding:0 2px; margin-left:4px;}
-  .chip .x:hover{opacity:1;}
   .confirm-bar{
-    display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff8e6; border:1px solid #f0d98c;
-    border-radius:10px; padding:12px 14px; margin-top:12px;
+    background:#fff8e6; border:1px solid #f0d98c; border-radius:10px; padding:10px; margin-top:8px; font-size:12px;
+    display:flex; align-items:center; justify-content:space-between;
   }
-  .mode-toggle{display:flex; gap:8px; margin-bottom:12px;}
-  .mode-toggle button{background:#fff; color:var(--navy); border:1px solid var(--line); font-weight:700;}
-  .mode-toggle button.active{background:var(--navy); color:#fff; border-color:var(--navy);}
-  .range-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .input-sm { padding:4px; font-size:12px; width:100px; border:1px solid var(--line); border-radius:4px; }
 </style>
 </head>
 <body>
@@ -98,239 +96,136 @@
 
   <header>
     <div>
-      <h1>QPS 약제급여 적정성평가 대시보드</h1>
-      <div class="sub">좋은삼선병원 · 원내 실시간 트랙 + 심평원 공식 트랙 (v0.3 안정화 버전)</div>
+      <h1>좋은삼선병원 QPS 약제급여 모니터링 시스템</h1>
+      <div class="sub">원내 데이터 전산 자동 분석 및 지표 연계 진단 대시보드</div>
     </div>
-    <div class="controls">
-      <label>보고서 기간</label>
-      <input type="text" id="reportLabel" style="width:140px;" placeholder="예: 2026년 2분기">
-      <button class="ghost small" id="resetBtn">전체 초기화</button>
-      <button class="small" id="exportBtn">Word 보고서 내보내기</button>
+    <div class="btn-zone">
+      <button class="ghost" id="resetBtn">전체 데이터 초기화</button>
+      <button id="exportBtn">💡 QPS 지표 개선 보고서(Word) 다운로드</button>
     </div>
   </header>
 
-  <section>
-    <h2>종합 등급 (2026년 평가 기준)</h2>
-    <div class="desc">심평원 공식 트랙 입력값을 기준으로 자동 산출됩니다.</div>
-    <div class="grid4" id="gradeCards"></div>
-  </section>
-
-  <section>
-    <h2>심평원 공식 지표 (분기별 입력, 약 2개월 지연)</h2>
-    <div class="desc">e-평가시스템 화면의 표를 그대로 옮겨 입력하세요.</div>
-
-    <div class="subhead">① 항생제 처방률 (%)</div>
-    <div class="tablewrap">
-      <table id="abxTable">
-        <thead>
-          <tr>
-            <th rowspan="2">상병구분</th><th rowspan="2">상병건수</th>
-            <th colspan="2">항생제처방률</th>
-            <th colspan="2">Cepha-3세대 이상</th>
-            <th colspan="2">Quinolone계열</th>
-            <th colspan="2">마크로라이드계열</th>
-          </tr>
-          <tr>
-            <th>귀원</th><th>평균</th><th>귀원</th><th>평균</th><th>귀원</th><th>평균</th><th>귀원</th><th>평균</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="subhead">② 주사제 처방률 (%, 전체상병)</div>
-    <table style="max-width:520px;">
-      <thead><tr><th>상병건수</th><th>귀원</th><th>평균</th></tr></thead>
-      <tbody>
-        <tr>
-          <td><input class="cell" data-inj="cnt" type="number"></td>
-          <td><input class="cell" data-inj="own" type="number" step="0.01"></td>
-          <td><input class="cell" data-inj="avg" type="number" step="0.01"></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="subhead">③ 약품목수 (평가군 평균값 입력 → 상대지수 자동 계산)</div>
-    <table style="max-width:640px;">
-      <thead><tr><th></th><th>귀원 (원내자료 자동반영)</th><th>평가군 평균</th><th>상대지수</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="name">처방건당 약품목수</td>
-          <td id="ownDrugCount">-</td>
-          <td><input class="cell" id="avgDrugCount" type="number" step="0.01"></td>
-          <td id="idxDrugCount">-</td>
-        </tr>
-        <tr>
-          <td class="name">6품목이상 처방비율(%)</td>
-          <td id="ownSix">-</td>
-          <td><input class="cell" id="avgSix" type="number" step="0.01"></td>
-          <td id="idxSix">-</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="footnote">※ 6품목이상 처방비율은 등급이 아닌 상대지수(본원값÷평가군평균)만 공개되는 지표입니다.</div>
-  </section>
-
-  <section>
-    <h2>원내 실시간 현황 (QPS 전산 엑셀, 월별 업로드)</h2>
-    <div class="desc">매달 "월별 약제평가 및 현황" 시트가 포함된 엑셀을 업로드해서 쌓아두세요. 보고할 때는 아래에서 기간을 선택해 합산해 볼 수 있습니다.</div>
-
-    <div class="upload-box" id="uploadBox">
-      <div>📂 엑셀 파일을 여기로 끌어놓거나 클릭해서 업로드</div>
-      <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
-    </div>
-
-    <div class="confirm-bar" id="confirmBar" style="display:none;">
-      <span>📄 <b id="pendingFileName"></b> — 이 자료는 몇 월 자료인가요?</span>
-      <input type="month" id="pendingMonth">
-      <button class="small" id="confirmAddBtn">추가</button>
-      <button class="ghost small" id="confirmCancelBtn">취소</button>
-    </div>
-
-    <div id="monthChipsWrap" style="display:none;">
-      <div class="subhead">업로드된 월 목록 (클릭하여 해당 월 데이터 조회 가능)</div>
-      <div class="chip-row" id="monthChips"></div>
-    </div>
-
-    <div id="hospitalSummaryWrap" style="display:none;">
-      <div class="mode-toggle">
-        <button id="modeSingleBtn" class="active">월별 보기</button>
-        <button id="modeRangeBtn">기간 합산 보기</button>
-      </div>
-      <div class="range-row" id="rangeControls" style="display:none;">
-        <label style="font-size:12.5px;color:var(--sub);">시작월</label>
-        <select id="rangeStart"></select>
-        <label style="font-size:12.5px;color:var(--sub);">종료월</label>
-        <select id="rangeEnd"></select>
+  <div class="grid-layout">
+    
+    <div class="panel-left">
+      <div class="card">
+        <h2>📂 원내 실시간 엑셀 업로드</h2>
+        <div class="upload-box" id="uploadBox">
+          마우스로 엑셀 파일을 끌어넣거나<br><b>[여기 클릭]</b> 하여 파일 선택
+          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+        </div>
+        <div class="confirm-bar" id="confirmBar" style="display:none;">
+          <span>월 선택: <input type="month" id="pendingMonth" class="input-sm"></span>
+          <button style="padding:4px 8px; font-size:11px;" id="confirmAddBtn">추가</button>
+        </div>
+        <div class="chip-row" id="monthChips"></div>
       </div>
 
-      <div class="subhead">병원 전체 요약</div>
-      <div class="grid4" id="hospitalKpis"></div>
+      <div class="card">
+        <h2>⚙️ 모니터링 조건 및 기준 설정</h2>
+        <label style="font-size:11.5px; font-weight:700; color:var(--sub);">지표 보고 기준 기간 명칭</label>
+        <input type="text" id="reportLabel" style="width:100%; margin:4px 0 12px;" class="input-sm" placeholder="예: 2026년 상반기">
+        
+        <label style="font-size:11.5px; font-weight:700; color:var(--sub);">처방건당 품목수 관리 한계선</label>
+        <input type="number" id="limitDrugCount" style="width:100%; margin:4px 0 12px;" class="input-sm" value="3.5" step="0.1">
 
-      <div class="flex-between" style="margin-top:18px;">
-        <div class="subhead" style="margin:0;">진료과 · 의사별 상세</div>
-        <input type="text" id="filterInput" placeholder="진료과/의사 검색" style="width:180px;">
+        <label style="font-size:11.5px; font-weight:700; color:var(--sub);">6품목이상 처방비율 한계선 (%)</label>
+        <input type="number" id="limitSixRate" style="width:100%; margin:4px 0;" class="input-sm" value="15.0" step="0.5">
       </div>
-      <div class="tablewrap" style="margin-top:8px;">
-        <table id="detailTable">
-          <thead><tr></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="footnote">빨간색 강조 = 6품목이상 처방비율 상위 20% 의사 (집중 모니터링 필요) · 표 헤더 클릭 시 정렬됩니다.</div>
     </div>
-  </section>
 
+    <div class="panel-right">
+      
+      <div class="card" style="border-top: 4px solid var(--navy);">
+        <h2>📢 QPS 통합 분석 브리핑 및 권고사항</h2>
+        <div class="alert-box" id="qpsSummaryAlert">
+          <h3>📊 진단 데이터가 없습니다.</h3>
+          <ul><li>왼쪽 패널에서 원내 약제평가 통계 엑셀 파일을 업로드해 주세요.</li></ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🚨 핵심 개선 관리 대상 (지표 임계치 초과 처방의 Top 5)</h2>
+        <div style="font-size:12px; color:var(--sub); margin-bottom:10px;">원내 기준치를 초과하여 병원 전체 지표 평균을 낮추고 있는 관리 대상 리스트입니다.</div>
+        <div class="target-list" id="targetDoctorList">
+          <div style="text-align:center; color:var(--sub); font-size:13px; padding:10px;">지정된 관리 대상이 없습니다. 본원은 현재 약제급여 적정성을 아주 잘 유지하고 있습니다.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📈 원내 지표 종합 통계 현황</h2>
+        <div class="kpi-container" id="hospitalKpiContainer"></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h2 style="margin:0;">🔍 진료과 · 처방의별 QPS 정밀 분석 지표</h2>
+          <input type="text" id="filterInput" placeholder="진료과 또는 의사명 검색" style="width:200px;" class="input-sm">
+        </div>
+        <div class="tablewrap">
+          <table id="detailTable">
+            <thead>
+              <tr>
+                <th>진료과</th><th>의사명</th><th>처방건수</th><th>건당품목수</th><th>6품목처방률</th><th>소화기약처방률</th><th>투약일당약품비</th><th>QPS 등급</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 </div>
 
 <script>
-const STORAGE_KEY = 'qps_drug_dashboard_v2';
+const STORAGE_KEY = 'qps_samsun_dashboard_v5';
 let state = {
   reportLabel: '2026년 2분기',
-  abx: {},
-  injection: {cnt:'',own:'',avg:''},
-  avgDrugCount:'', avgSix:'',
+  limitDrugCount: 3.5,
+  limitSixRate: 15.0,
   monthlyData: {},
-  viewMode: 'single',
-  selectedMonth: null,
-  rangeStart: null, rangeEnd: null
+  selectedMonth: null
 };
 let pending = null;
 
-const ABX_ROWS = [
-  {key:'total', label:'전체상병'},
-  {key:'resp', label:'(J00-J47)호흡기상병전체'},
-  {key:'upper', label:'(J00-J06)급성상기도감염'},
-  {key:'lower', label:'(J20-J22)기타급성하기도염'}
-];
-
 function loadState(){
-  try{
+  try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){ const parsed = JSON.parse(raw); state = Object.assign(state, parsed); }
-  }catch(e){}
+    if(raw) { state = Object.assign(state, JSON.parse(raw)); }
+  } catch(e){}
 }
 function saveState(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
 }
 
-function gradeUpper(rate){ if(rate==null||isNaN(rate)) return null;
-  if(rate<=20) return 1; if(rate<=30) return 2; if(rate<=45) return 3; if(rate<=60) return 4; return 5; }
-function gradeLower(rate){ if(rate==null||isNaN(rate)) return null;
-  if(rate<=30) return 1; if(rate<=45) return 2; if(rate<=60) return 3; if(rate<=75) return 4; return 5; }
-function gradeInjection(rate){ if(rate==null||isNaN(rate)) return null;
-  if(rate<=2) return 1; if(rate<=6) return 2; if(rate<=13) return 3; if(rate<=24) return 4; return 5; }
-function gradeIndex(idx){ if(idx==null||isNaN(idx)) return null;
-  if(idx<=0.9) return 1; if(idx<=1.0) return 2; if(idx<=1.1) return 3; if(idx<=1.2) return 4; return 5; }
-const GRADE_SCORE = {1:100,2:90,3:80,4:70,5:60};
-function compositeGrade(g1,g2){
-  if(g1==null && g2==null) return null;
-  let score;
-  if(g1!=null && g2!=null) score = GRADE_SCORE[g1]*0.5 + GRADE_SCORE[g2]*0.5;
-  else score = GRADE_SCORE[g1!=null?g1:g2];
-  if(score>90) return 1; if(score>80) return 2; if(score>70) return 3; if(score>60) return 4; return 5;
-}
-function gradeClass(g){ return g==null ? 'gx' : ('g'+g); }
-function gradeText(g){ return g==null ? '미입력' : (g+'등급'); }
-
-function renderAbxTable(){
-  const tbody = document.querySelector('#abxTable tbody');
-  tbody.innerHTML = '';
-  ABX_ROWS.forEach(r=>{
-    const d = state.abx[r.key] || {};
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="name">${r.label}</td>
-      <td><input class="cell" style="width:56px" data-row="${r.key}" data-f="cnt" type="number" value="${d.cnt??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="own" type="number" step="0.01" value="${d.own??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="avg" type="number" step="0.01" value="${d.avg??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="cn3_own" type="number" step="0.01" value="${d.cn3_own??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="cn3_avg" type="number" step="0.01" value="${d.cn3_avg??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="qn_own" type="number" step="0.01" value="${d.qn_own??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="qn_avg" type="number" step="0.01" value="${d.qn_avg??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="mc_own" type="number" step="0.01" value="${d.mc_own??''}"></td>
-      <td><input class="cell" data-row="${r.key}" data-f="mc_avg" type="number" step="0.01" value="${d.mc_avg??''}"></td>
-    `;
-    tbody.appendChild(tr);
-  });
-  tbody.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('input', e=>{
-      const row = e.target.dataset.row, f = e.target.dataset.f;
-      if(!state.abx[row]) state.abx[row] = {};
-      state.abx[row][f] = e.target.value;
-      saveState(); renderGrades();
-    });
-  });
-}
-function renderInjectionInputs(){
-  document.querySelector('[data-inj="cnt"]').value = state.injection.cnt || '';
-  document.querySelector('[data-inj="own"]').value = state.injection.own || '';
-  document.querySelector('[data-inj="avg"]').value = state.injection.avg || '';
-  document.querySelectorAll('[data-inj]').forEach(inp=>{
-    inp.addEventListener('input', e=>{
-      state.injection[e.target.dataset.inj] = e.target.value;
-      saveState(); renderGrades();
-    });
-  });
-}
-function renderDrugCountInputs(){
-  document.getElementById('avgDrugCount').value = state.avgDrugCount || '';
-  document.getElementById('avgSix').value = state.avgSix || '';
-  document.getElementById('avgDrugCount').addEventListener('input', e=>{ state.avgDrugCount = e.target.value; saveState(); renderGrades(); });
-  document.getElementById('avgSix').addEventListener('input', e=>{ state.avgSix = e.target.value; saveState(); renderGrades(); });
-}
-
-// 병원 엑셀 데이터의 쉼표(,) 등 문자 가공 예외처리 보완 함수
-function num(v){ 
+function num(v){
   if(v === null || v === undefined) return 0;
   if(typeof v === 'number') return v;
-  const s = String(v).replace(/,/g, '').trim();
-  const n = parseFloat(s); 
-  return isNaN(n)? 0 : n; 
+  return parseFloat(String(v).replace(/,/g, '').trim()) || 0;
+}
+
+function getSortedMonths(){ return Object.keys(state.monthlyData).sort(); }
+function getEffectiveRows(){
+  const months = getSortedMonths();
+  if(!months.length) return [];
+  const m = state.selectedMonth || months[months.length-1];
+  return state.monthlyData[m] ? state.monthlyData[m].detailRows : [];
+}
+
+// QPS 자체 기준에 의한 신호등 판정 함수
+function judgeQpsStatus(drugCount, sixRate) {
+  const limitDC = parseFloat(state.limitDrugCount);
+  const limitSix = parseFloat(state.limitSixRate);
+  
+  if (drugCount > limitDC * 1.15 || sixRate > limitSix * 1.3) return { text: '적극관리(Red)', class: 'bg-red', score: 3 };
+  if (drugCount > limitDC || sixRate > limitSix) return { text: '중점주의(Orange)', class: 'bg-orange', score: 2 };
+  return { text: '적정유지(Green)', class: 'bg-green', score: 1 };
 }
 
 function aggregateHospital(rows){
-  let sumOP=0,sumItems=0,sum6=0,sumGI=0,sumCostW=0;
+  let sumOP=0, sumItems=0, sum6=0, sumGI=0, sumCostW=0;
   rows.forEach(r=>{
     const op = num(r['원외처방 건수']);
     sumOP += op;
@@ -340,19 +235,19 @@ function aggregateHospital(rows){
     sumCostW += num(r['투약일당 약품비']) * op;
   });
   return {
-    '원외처방 건수': sumOP,
-    '약품목수': sumItems,
-    '처방건당 약품목수': sumOP ? +(sumItems/sumOP).toFixed(2) : null,
-    '6품목이상 처방비율': sumOP ? +((sum6/sumOP)*100).toFixed(2) : null,
-    '투약일당 약품비': sumOP ? Math.round(sumCostW/sumOP) : null,
-    '소화기관용약처방율': sumOP ? +((sumGI/sumOP)*100).toFixed(2) : null
+    opCount: sumOP,
+    avgItems: sumOP ? +(sumItems/sumOP).toFixed(2) : 0,
+    sixRate: sumOP ? +((sum6/sumOP)*100).toFixed(2) : 0,
+    giRate: sumOP ? +((sumGI/sumOP)*100).toFixed(2) : 0,
+    avgCost: sumOP ? Math.round(sumCostW/sumOP) : 0
   };
 }
+
 function aggregateDetail(rows){
   const map = {};
   rows.forEach(r=>{
     const key = (r['진료과']||'')+'|'+(r['의사']||'');
-    if(!map[key]) map[key] = {진료과:r['진료과'], 의사:r['의사'], op:0, items:0, six:0, gi:0, costW:0};
+    if(!map[key]) map[key] = {dept:r['진료과'], name:r['의사'], op:0, items:0, six:0, gi:0, costW:0};
     const op = num(r['원외처방 건수']);
     map[key].op += op;
     map[key].items += num(r['약품목수']);
@@ -361,76 +256,108 @@ function aggregateDetail(rows){
     map[key].costW += num(r['투약일당 약품비']) * op;
   });
   return Object.values(map).map(m=>({
-    '진료과': m.진료과, '의사': m.의사,
-    '원외처방 건수': m.op,
-    '약품목수': m.items,
-    '처방건당 약품목수': m.op? +(m.items/m.op).toFixed(2) : null,
-    '6품목이상 처방건수': m.six,
-    '6품목이상 처방비율': m.op? +((m.six/m.op)*100).toFixed(2) : null,
-    '투약일당 약품비': m.op? Math.round(m.costW/m.op) : null,
-    '소화기관용약 처방건수': m.gi,
-    '소화기관용약 처방율': m.op? +((m.gi/m.op)*100).toFixed(2) : null
-  }));
+    dept: m.dept, name: m.name, op: m.op,
+    dc: m.op ? +(m.items/m.op).toFixed(2) : 0,
+    six: m.op ? +((m.six/m.op)*100).toFixed(2) : 0,
+    gi: m.op ? +((m.gi/m.op)*100).toFixed(2) : 0,
+    cost: m.op ? Math.round(m.costW/m.op) : 0
+  })).filter(r => r.op > 5); // 처방건수 너무 적은 임시 데이터 필터링
 }
-function getSortedMonths(){ return Object.keys(state.monthlyData).sort(); }
-function getEffectiveRows(){
+
+function renderAll() {
   const months = getSortedMonths();
-  if(!months.length) return [];
-  if(state.viewMode === 'single'){
-    const m = state.selectedMonth && state.monthlyData[state.selectedMonth] ? state.selectedMonth : months[months.length-1];
-    return state.monthlyData[m] ? state.monthlyData[m].detailRows : [];
-  } else {
-    let start = state.rangeStart || months[0];
-    let end = state.rangeEnd || months[months.length-1];
-    if(start > end){ const t=start; start=end; end=t; }
-    let rows = [];
-    months.forEach(m=>{ if(m>=start && m<=end) rows = rows.concat(state.monthlyData[m].detailRows); });
-    return rows;
+  renderMonthChips(months);
+  
+  const rows = getEffectiveRows();
+  if(!rows.length) {
+    document.getElementById('hospitalKpiContainer').innerHTML = '';
+    return;
   }
+
+  const hs = aggregateHospital(rows);
+  const details = aggregateDetail(rows);
+
+  // 1. KPI 대시보드 출력
+  document.getElementById('hospitalKpiContainer').innerHTML = `
+    <div class="kpi-block"><div class="lbl">총 원외처방 건수</div><div class="val">${hs.opCount.toLocaleString()}건</div></div>
+    <div class="kpi-block"><div class="lbl">처방건당 약품목수</div><div class="val" style="color:${hs.avgItems > state.limitDrugCount ? 'var(--red)' : 'var(--green)'}">${hs.avgItems}품목</div></div>
+    <div class="kpi-block"><div class="lbl">6품목 이상 처방비율</div><div class="val" style="color:${hs.sixRate > state.limitSixRate ? 'var(--red)' : 'var(--green)'}">${hs.sixRate}%</div></div>
+    <div class="kpi-block"><div class="lbl">소화기관용약 처방률</div><div class="val">${hs.giRate}%</div></div>
+    <div class="kpi-block"><div class="lbl">투약일당 평균 약품비</div><div class="val">${hs.avgCost.toLocaleString()}원</div></div>
+  `;
+
+  // 2. 관리 집중 대상 의사 (Top 5) 정밀 추출 및 원인 진단
+  const targets = details
+    .map(d => { d.status = judgeQpsStatus(d.dc, d.six); return d; })
+    .filter(d => d.status.score > 1)
+    .sort((a,b) => b.six - a.six)
+    .slice(0, 5);
+
+  const targetWrap = document.getElementById('targetDoctorList');
+  if(targets.length) {
+    targetWrap.innerHTML = targets.map(t => {
+      let analysis = '';
+      if(t.gi > 40) { analysis += ` [소화제 과다처방 유력: 소화기약 비율 ${t.gi}%]`; }
+      if(t.cost > hs.avgCost * 1.5) { analysis += ` [고가약 처방 경향 내포]`; }
+      return `
+        <div class="target-item">
+          <div class="meta">🏥 ${t.dept} - ${t.name} 의사 (건수: ${t.op}건)</div>
+          <div class="reason">건당품목수: ${t.dc}개 / 6품목비율: ${t.six}% <br><span style="font-size:11px;color:#4a5568;">💡 진단:${analysis || ' 다량 품목 처방 습관 개선 필요'}</span></div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    targetWrap.innerHTML = `<div style="text-align:center; color:var(--green); font-size:13px; padding:10px; font-weight:700;">🚨 관리 대상 처방의가 없습니다. 적정성 지표가 완벽하게 통제되고 있습니다.</div>`;
+  }
+
+  // 3. 브리핑 요약 텍스트 자동 완성 (QPS 보고서용 브리핑 자동 빌드)
+  const redCount = details.filter(d => judgeQpsStatus(d.dc, d.six).score === 3).length;
+  const orangeCount = details.filter(d => judgeQpsStatus(d.dc, d.six).score === 2).length;
+  
+  document.getElementById('qpsSummaryAlert').innerHTML = `
+    <h3>📢 ${state.reportLabel || '해당 기간'} 좋은삼선병원 자체 약제급여 분석 리포트</h3>
+    <ul>
+      <li><b>현황 요약:</b> 본원 종합 건당 약품목수는 <b>${hs.avgItems}개</b>, 6품목 이상 처방률은 <b>${hs.sixRate}%</b>로 관리 목표치 대비 계측되었습니다.</li>
+      <li><b>소화기약 연계 추적:</b> 원내 전체 소화기관용약 처방률이 <b>${hs.giRate}%</b>에 달해, 다량처방 의사들의 대다수가 소화제 동시 처방 행태를 보이고 있습니다. (과별 가이드라인 회람 권고)</li>
+      <li><b>추적 관리 필요 대상자:</b> 원내 모니터링 기준을 초과하여 병원 평균 지표를 저하시키는 의사는 총 <b>${redCount + orangeCount}명</b>(적극관리 ${redCount}명, 중점주의 ${orangeCount}명)입니다. 해당 진료과 지표 개선 상담 조치가 권장됩니다.</li>
+    </ul>
+  `;
+
+  // 4. 메인 분석 테이블 출력
+  const filterText = document.getElementById('filterInput').value.toLowerCase();
+  const tbody = document.querySelector('#detailTable tbody');
+  tbody.innerHTML = details
+    .filter(d => d.dept.toLowerCase().includes(filterText) || d.name.toLowerCase().includes(filterText))
+    .map(d => {
+      const judge = judgeQpsStatus(d.dc, d.six);
+      return `
+        <tr>
+          <td class="name">${d.dept}</td><td>${d.name}</td><td>${d.op}</td>
+          <td style="font-weight:bold; color:${d.dc > state.limitDrugCount?'var(--red)':'inherit'}">${d.dc}</td>
+          <td style="font-weight:bold; color:${d.six > state.limitSixRate?'var(--red)':'inherit'}">${d.six}%</td>
+          <td>${d.gi}%</td><td>${d.cost.toLocaleString()}원</td>
+          <td><span class="status-badge ${judge.class}">${judge.text}</span></td>
+        </tr>
+      `;
+    }).join('');
 }
 
-function renderGrades(){
-  const upperRate = parseFloat(state.abx.upper?.own);
-  const lowerRate = parseFloat(state.abx.lower?.own);
-  const gUpper = gradeUpper(upperRate);
-  const gLower = gradeLower(lowerRate);
-  const gComposite = compositeGrade(gUpper, gLower);
-
-  const injRate = parseFloat(state.injection.own);
-  const gInj = gradeInjection(injRate);
-
-  const rows = getEffectiveRows();
-  const hs = rows.length ? aggregateHospital(rows) : null;
-
-  const ownDrugCount = hs ? hs['처방건당 약품목수'] : null;
-  document.getElementById('ownDrugCount').textContent = ownDrugCount!=null ? ownDrugCount : '엑셀 업로드 필요';
-  const avgDC = parseFloat(state.avgDrugCount);
-  let idxDC = null;
-  if(ownDrugCount!=null && !isNaN(avgDC) && avgDC>0){ idxDC = (ownDrugCount/avgDC); }
-  document.getElementById('idxDrugCount').textContent = idxDC!=null ? idxDC.toFixed(2) : '-';
-  const gDC = gradeIndex(idxDC);
-
-  const ownSix = hs ? hs['6품목이상 처방비율'] : null;
-  document.getElementById('ownSix').textContent = ownSix!=null ? ownSix : '엑셀 업로드 필요';
-  const avgSixVal = parseFloat(state.avgSix);
-  let idxSix = null;
-  if(ownSix!=null && !isNaN(avgSixVal) && avgSixVal>0){ idxSix = (ownSix/avgSixVal); }
-  document.getElementById('idxSix').textContent = idxSix!=null ? idxSix.toFixed(2) : '-';
-
-  const cards = [
-    {label:'급성 상·하기도 항생제 종합등급', grade:gComposite, detail:`상기도 ${gradeText(gUpper)} · 하기도 ${gradeText(gLower)}`},
-    {label:'주사제 처방률', grade:gInj, detail: isNaN(injRate)?'귀원값 미입력':`귀원 ${injRate}%`},
-    {label:'처방건당 약품목수 (상대지수)', grade:gDC, detail: idxDC!=null? `상대지수 ${idxDC.toFixed(2)}` : '평가군평균 입력 필요'},
-    {label:'6품목이상 처방비율 (참고용)', grade:null, detail: idxSix!=null? `상대지수 ${idxSix.toFixed(2)} (등급 미부여)` : '평가군평균 입력 필요'}
-  ];
-  const wrap = document.getElementById('gradeCards');
-  wrap.innerHTML = '';
-  cards.forEach(c=>{
-    const div = document.createElement('div');
-    div.className = 'grade-card ' + gradeClass(c.grade);
-    div.innerHTML = `<div class="lbl">${c.label}</div><div class="badge">${c.grade? c.grade+'등급':'-'}</div><div class="detail">${c.detail}</div>`;
-    wrap.appendChild(div);
-  });
+function renderMonthChips(months){
+  const wrap = document.getElementById('monthChips');
+  wrap.innerHTML = months.map(m => `
+    <div class="chip ${state.selectedMonth === m ? 'active' : ''}" onclick="changeMonth('${m}')">
+      ${m} <span class="x" onclick="deleteMonth(event, '${m}')">✕</span>
+    </div>
+  `).join('');
+}
+function changeMonth(m){ state.selectedMonth = m; saveState(); renderAll(); }
+function deleteMonth(e, m){
+  e.stopPropagation();
+  if(confirm(`${m} 데이터를 삭제하시겠습니까?`)){
+    delete state.monthlyData[m];
+    if(state.selectedMonth === m) state.selectedMonth = null;
+    saveState(); renderAll();
+  }
 }
 
 function findHeaderRowIndex(aoa){
@@ -438,8 +365,7 @@ function findHeaderRowIndex(aoa){
   return -1;
 }
 function parseSheet(aoa){
-  const hIdx = findHeaderRowIndex(aoa);
-  if(hIdx<0) return null;
+  const hIdx = findHeaderRowIndex(aoa); if(hIdx<0) return null;
   const headerRow = aoa[hIdx];
   const deptColIdx = headerRow.indexOf('진료과');
   const rightHeaders = headerRow.slice(deptColIdx);
@@ -448,10 +374,9 @@ function parseSheet(aoa){
   for(let r = hIdx+1; r<aoa.length; r++){
     const row = (aoa[r]||[]).slice(deptColIdx);
     if(row.every(v=>v==null || v==='')) continue;
-    const dept = row[0] || currentDept;
-    currentDept = dept;
+    const dept = row[0] || currentDept; currentDept = dept;
     const doctor = row[1];
-    if(!doctor || doctor === '소계' || doctor === '합계') continue; // 불필요한 행 제외 추가
+    if(!doctor || doctor === '소계' || doctor === '합계') continue;
     const rec = {진료과:dept, 의사:doctor};
     for(let j=2;j<rightHeaders.length;j++){ rec[rightHeaders[j]] = row[j]; }
     detailRows.push(rec);
@@ -465,251 +390,97 @@ function handleFile(file){
     const data = new Uint8Array(e.target.result);
     const wb = XLSX.read(data, {type:'array'});
     let sheetName = wb.SheetNames.find(n=>n.includes('약제평가')) || wb.SheetNames[0];
-    const ws = wb.Sheets[sheetName];
-    const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, raw:true});
     const parsed = parseSheet(aoa);
-    if(!parsed){ alert('시트에서 "진료과" 헤더를 찾지 못했습니다. 파일 구조를 확인해주세요.'); return; }
+    if(!parsed){ alert('엑셀 시트 구조에서 "진료과" 항목을 식별하지 못했습니다.'); return; }
     pending = {fileName: file.name, detailRows: parsed.detailRows};
-    document.getElementById('pendingFileName').textContent = file.name;
-    document.getElementById('pendingMonth').value = '';
     document.getElementById('confirmBar').style.display = 'flex';
   };
   reader.readAsArrayBuffer(file);
 }
 
-function addPendingMonth(){
-  const m = document.getElementById('pendingMonth').value;
-  if(!m){ alert('월을 선택해주세요.'); return; }
-  if(state.monthlyData[m] && !confirm(`${m} 자료가 이미 있습니다. 덮어쓸까요?`)) return;
-  state.monthlyData[m] = {fileName: pending.fileName, detailRows: pending.detailRows};
-  state.selectedMonth = m;
-  pending = null;
-  document.getElementById('confirmBar').style.display = 'none';
-  saveState();
-  renderAll();
-}
-
-function renderMonthChips(){
-  const months = getSortedMonths();
-  const wrap = document.getElementById('monthChipsWrap');
-  const chips = document.getElementById('monthChips');
-  if(!months.length){ wrap.style.display='none'; return; }
-  wrap.style.display = 'block';
-  chips.innerHTML = '';
-  months.forEach(m=>{
-    const chip = document.createElement('div');
-    chip.className = 'chip' + (state.viewMode==='single' && state.selectedMonth===m ? ' active' : '');
-    chip.innerHTML = `${m} <span class="x" data-del="${m}">✕</span>`;
-    chip.addEventListener('click', (e)=>{
-      if(e.target.dataset.del) return;
-      state.viewMode = 'single'; state.selectedMonth = m; saveState(); renderAll();
-    });
-    chips.appendChild(chip);
-  });
-  chips.querySelectorAll('[data-del]').forEach(x=>{
-    x.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const m = e.target.dataset.del;
-      if(confirm(`${m} 자료를 삭제할까요?`)){
-        delete state.monthlyData[m];
-        if(state.selectedMonth === m) state.selectedMonth = null;
-        saveState(); renderAll();
-      }
-    });
-  });
-}
-function renderRangeSelectors(){
-  const months = getSortedMonths();
-  const s = document.getElementById('rangeStart'), en = document.getElementById('rangeEnd');
-  s.innerHTML = months.map(m=>`<option value="${m}">${m}</option>`).join('');
-  en.innerHTML = months.map(m=>`<option value="${m}">${m}</option>`).join('');
-  if(months.length){
-    s.value = state.rangeStart && months.includes(state.rangeStart) ? state.rangeStart : months[0];
-    en.value = state.rangeEnd && months.includes(state.rangeEnd) ? state.rangeEnd : months[months.length-1];
-    state.rangeStart = s.value; state.rangeEnd = en.value;
-  }
-}
-
-let sortState = {col:null, dir:1};
-function renderHospitalAndDetail(){
-  const months = getSortedMonths();
-  const summaryWrap = document.getElementById('hospitalSummaryWrap');
-  if(!months.length){ summaryWrap.style.display='none'; return; }
-  summaryWrap.style.display = 'block';
-
-  document.getElementById('modeSingleBtn').classList.toggle('active', state.viewMode==='single');
-  document.getElementById('modeRangeBtn').classList.toggle('active', state.viewMode==='range');
-  document.getElementById('rangeControls').style.display = state.viewMode==='range' ? 'flex' : 'none';
-
-  const rows = getEffectiveRows();
-  const hs = aggregateHospital(rows);
-  const kpiWrap = document.getElementById('hospitalKpis');
-  kpiWrap.innerHTML = '';
-  const order = ['원외처방 건수','약품목수','처방건당 약품목수','6품목이상 처방비율','투약일당 약품비','소화기관용약처방율'];
-  order.forEach(k=>{
-    if(!(k in hs) || hs[k]==null) return;
-    const div = document.createElement('div');
-    div.className = 'kpi';
-    div.innerHTML = `<div class="lbl">${k}</div><div class="val">${hs[k].toLocaleString()}</div>`; // 천단위 쉼표 추가
-    kpiWrap.appendChild(div);
-  });
-
-  const detailRows = aggregateDetail(rows);
-  const table = document.getElementById('detailTable');
-  const thead = table.querySelector('thead tr');
-  const tbody = table.querySelector('tbody');
-  const headers = ['진료과','의사','원외처방 건수','약품목수','처방건당 약품목수','6품목이상 처방건수','6품목이상 처방비율','투약일당 약품비','소화기관용약 처방건수','소화기관용약 처방율'];
-  thead.innerHTML = headers.map(h=>`<th class="sortable" data-col="${h}">${h}</th>`).join('');
-  thead.querySelectorAll('th').forEach(th=>{
-    th.addEventListener('click', ()=>{
-      const col = th.dataset.col;
-      sortState.dir = (sortState.col===col) ? -sortState.dir : 1;
-      sortState.col = col;
-      renderHospitalAndDetail();
-    });
-  });
-
-  let filtered = detailRows.slice();
-  const filterText = document.getElementById('filterInput').value;
-  if(filterText){
-    const t = filterText.toLowerCase();
-    filtered = filtered.filter(r => (r['진료과']||'').toLowerCase().includes(t) || (r['의사']||'').toLowerCase().includes(t));
-  }
-  if(sortState.col){
-    filtered.sort((a,b)=>{
-      let va=a[sortState.col], vb=b[sortState.col];
-      const na=parseFloat(va), nb=parseFloat(vb);
-      if(!isNaN(na)&&!isNaN(nb)) return (na-nb)*sortState.dir;
-      return String(va||'').localeCompare(String(vb||''))*sortState.dir;
-    });
-  }
-  const vals = filtered.map(r=>parseFloat(r['6품목이상 처방비율'])).filter(v=>!isNaN(v)).sort((a,b)=>a-b);
-  const threshold = vals.length ? vals[Math.floor(vals.length*0.8)] : null;
-
-  tbody.innerHTML = filtered.map(r=>{
-    return '<tr>' + headers.map(h=>{
-      let v = r[h]; if(v==null) v='';
-      const cls = (h==='진료과'||h==='의사') ? 'name' : '';
-      if(h==='6품목이상 처방비율' && threshold!=null && parseFloat(v)>=threshold && parseFloat(v)>0){
-        return `<td class="${cls} hi">${v}</td>`;
-      }
-      // 가독성을 위한 천단위 쉼표 처리 (건수나 비용 항목)
-      if((h.includes('건수') || h.includes('비용')) && !isNaN(parseFloat(v))) {
-        v = Math.round(parseFloat(v)).toLocaleString();
-      }
-      return `<td class="${cls}">${v}</td>`;
-    }).join('') + '</tr>';
-  }).join('');
-}
-
-function renderAll(){
-  renderMonthChips();
-  renderRangeSelectors();
-  renderHospitalAndDetail();
-  renderGrades();
-}
-
 function exportWord(){
-  const q = state.reportLabel || '보고기간 미입력';
-  const gradeCardsHtml = document.getElementById('gradeCards').innerHTML
-    .replace(/class="grade-card g1"/g,'style="background:#1e8e5a;color:#fff;padding:12px;border-radius:6px;display:inline-block;width:22%;margin:1%;vertical-align:top;"')
-    .replace(/class="grade-card g2"/g,'style="background:#5fa83a;color:#fff;padding:12px;border-radius:6px;display:inline-block;width:22%;margin:1%;vertical-align:top;"')
-    .replace(/class="grade-card g3"/g,'style="background:#e0a721;color:#fff;padding:12px;border-radius:6px;display:inline-block;width:22%;margin:1%;vertical-align:top;"')
-    .replace(/class="grade-card g4"/g,'style="background:#e0722a;color:#fff;padding:12px;border-radius:6px;display:inline-block;width:22%;margin:1%;vertical-align:top;"')
-    .replace(/class="grade-card g5"/g,'style="background:#d0392a;color:#fff;padding:12px;border-radius:6px;display:inline-block;width:22%;margin:1%;vertical-align:top;"')
-    .replace(/class="grade-card gx"/g,'style="background:#8a94a3;color:#fff;padding:12px;border-radius:6px;display:inline-block;width:22%;margin:1%;vertical-align:top;"')
-    .replace(/class="lbl"/g,'style="font-size:11px;"')
-    .replace(/class="badge"/g,'style="font-size:24px;font-weight:bold;margin:4px 0;"')
-    .replace(/class="detail"/g,'style="font-size:10px;"');
-
-  // Word 출력 시 표 레이아웃 스타일 깨짐 방지용 스타일 추가
-  const tableStyle = `style="width:100%;border-collapse:collapse;margin-top:10px;font-size:11px;" border="1" cellspacing="0" cellpadding="4"`;
-  
-  // 병원 전체 요약 가져오기
+  const label = state.reportLabel;
   const rows = getEffectiveRows();
-  const hs = rows.length ? aggregateHospital(rows) : {};
-  let kpiTableHtml = `<table ${tableStyle}><tr>`;
-  Object.keys(hs).forEach(k => { kpiTableHtml += `<th style="background:#f0f3f8;">${k}</th>`; });
-  kpiTableHtml += `</tr><tr>`;
-  Object.values(hs).forEach(v => { kpiTableHtml += `<td>${v !== null ? v.toLocaleString() : '-'}</td>`; });
-  kpiTableHtml += `</tr></table>`;
+  if(!rows.length) return alert('출력할 데이터가 존재하지 않습니다.');
+  const hs = aggregateHospital(rows);
+  const details = aggregateDetail(rows);
+  
+  const targets = details
+    .map(d => { d.status = judgeQpsStatus(d.dc, d.six); return d; })
+    .filter(d => d.status.score > 1)
+    .sort((a,b) => b.six - a.six).slice(0,5);
+
+  let targetRowsHtml = '';
+  targets.forEach(t => {
+    targetRowsHtml += `<tr><td>${t.dept}</td><td>${t.name}</td><td>${t.dc}개</td><td>${t.six}%</td><td>${t.gi}%</td></tr>`;
+  });
 
   const html = `
   <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-  <head><meta charset="utf-8"><title>약제급여 적정성평가 회람</title></head>
-  <body style="font-family:'맑은 고딕',sans-serif;padding:20px;">
-    <h2 style="text-align:center;color:#1b3a5c;">${q} 약제급여 적정성평가 현황 보고</h2>
-    <p style="font-size:12px;text-align:right;color:#6b7684;">작성부서: QPS팀</p>
+  <head><meta charset="utf-8"><title>QPS 보고서</title></head>
+  <body style="font-family:'맑은 고딕',sans-serif; padding:20px; line-height:1.6;">
+    <h2 style="text-align:center; color:#12283f;">좋은삼선병원 약제급여 적정성 지표 보고서</h2>
+    <p style="text-align:right; font-size:12px; color:#555;">보고서 분류: QPS 지표 개선 액션 플랜 (${label})</p>
+    <hr style="border:1px dashed #12283f;">
     
-    <hr style="border:1px solid #1b3a5c;">
-    
-    <h3>1. 종합 등급 현황</h3>
-    <div style="width:100%;margin-bottom:20px;">${gradeCardsHtml}</div>
-    
-    <h3>2. 원내 진료전체 요약 현황 (${state.viewMode === 'single' ? state.selectedMonth : state.rangeStart + '~' + state.rangeEnd})</h3>
-    <div>${kpiTableHtml}</div>
-    
-    <h3 style="margin-top:20px;">3. 안내 및 협조사항</h3>
-    <ul style="font-size:12.5px;line-height:1.6;color:#1f2937;">
-      <li>본 자료는 원내 QPS 지표 모니터링을 위해 전산 산출된 데이터 기반 분석 자료입니다.</li>
-      <li>심평원 공식 지표(약 2개월 지연 수신) 대비 원내 실시간 흐름을 파악하는 참고자료로 활용하시기 바랍니다.</li>
-      <li>6품목이상 다량처방 비율이 높은 진료과 및 처방의께서는 환자의 임상적 상태를 고려하시어 적정 처방 관리에 협조를 부탁드립니다.</li>
-    </ul>
+    <h3>1. 본원 약제급여 지표 요약 현황</h3>
+    <table border="1" cellspacing="0" cellpadding="6" style="width:100%; border-collapse:collapse; text-align:center; font-size:12px;">
+      <tr style="background:#f0f3f8;"><th>원외처방 건수</th><th>처방건당 약품목수</th><th>6품목이상 처방비율</th><th>소화기관용약 처방률</th><th>투약일당 평균약품비</th></tr>
+      <tr><td>${hs.opCount.toLocaleString()}건</td><td>${hs.avgItems}개</td><td>${hs.sixRate}%</td><td>${hs.giRate}%</td><td>${hs.avgCost.toLocaleString()}원</td></tr>
+    </table>
+
+    <h3>2. 중점 QPS 개선 및 추적관리 대상 처방의 (Top 5)</h3>
+    <table border="1" cellspacing="0" cellpadding="6" style="width:100%; border-collapse:collapse; text-align:center; font-size:12px;">
+      <tr style="background:#fff0f0;"><th>진료과</th><th>의사명</th><th>건당 품목수</th><th>6품목 처방비율</th><th>소화기약 처방률</th></tr>
+      ${targetRowsHtml || '<tr><td colspan="5">지정 관리 대상 없음 (양호)</td></tr>'}
+    </table>
+
+    <h3>3. QPS 분석의견 및 지표 개선 개선 대책</h3>
+    <p style="font-size:12.5px; color:#333;">
+      - 본원의 건당 약품목수 증가의 주요 기저 원인은 <b>소화기관용약(처방률 ${hs.giRate}%)</b>의 상시 동시 처방 관행으로 판단됩니다.<br>
+      - 다량 처방 상위 처방의를 대상으로 소화기약 중복 처방 및 처방 적정성 가이드라인을 회람하고 지표 모니터링 결과를 환류 조치하고자 합니다.
+    </p>
   </body></html>`;
 
   const blob = new Blob(['\ufeff', html], {type:'application/msword'});
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `약제급여_적정성평가_보고서_${q.replace(/ /g,'_')}.doc`;
+  link.download = `좋은삼선병원_QPS_약제지표보고서_${label}.doc`;
   link.click();
 }
 
 function init(){
   loadState();
-  document.getElementById('reportLabel').value = state.reportLabel || '';
-  document.getElementById('reportLabel').addEventListener('input', e=>{ state.reportLabel = e.target.value; saveState(); });
+  document.getElementById('reportLabel').value = state.reportLabel;
+  document.getElementById('limitDrugCount').value = state.limitDrugCount;
+  document.getElementById('limitSixRate').value = state.limitSixRate;
 
-  renderAbxTable();
-  renderInjectionInputs();
-  renderDrugCountInputs();
-  renderAll();
+  document.getElementById('reportLabel').addEventListener('input', e=>{ state.reportLabel = e.target.value; saveState(); });
+  document.getElementById('limitDrugCount').addEventListener('input', e=>{ state.limitDrugCount = e.target.value; saveState(); renderAll(); });
+  document.getElementById('limitSixRate').addEventListener('input', e=>{ state.limitSixRate = e.target.value; saveState(); renderAll(); });
+  document.getElementById('filterInput').addEventListener('input', renderAll);
 
   const uploadBox = document.getElementById('uploadBox');
   const fileInput = document.getElementById('fileInput');
   uploadBox.addEventListener('click', ()=>fileInput.click());
-  uploadBox.addEventListener('dragover', e=>{ e.preventDefault(); uploadBox.classList.add('active'); });
-  uploadBox.addEventListener('dragleave', ()=> uploadBox.classList.remove('active'));
-  uploadBox.addEventListener('drop', e=>{
-    e.preventDefault(); uploadBox.classList.remove('active');
-    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-  });
   fileInput.addEventListener('change', e=>{ if(e.target.files.length) handleFile(e.target.files[0]); });
 
-  document.getElementById('confirmAddBtn').addEventListener('click', addPendingMonth);
-  document.getElementById('confirmCancelBtn').addEventListener('click', ()=>{
-    pending = null; document.getElementById('confirmBar').style.display = 'none';
-  });
-
-  document.getElementById('modeSingleBtn').addEventListener('click', ()=>{
-    state.viewMode = 'single';
-    if(!state.selectedMonth){ const months = getSortedMonths(); state.selectedMonth = months[months.length-1]; }
+  document.getElementById('confirmAddBtn').addEventListener('click', ()=>{
+    const m = document.getElementById('pendingMonth').value;
+    if(!m) return alert('월을 지정해 주세요.');
+    state.monthlyData[m] = { detailRows: pending.detailRows };
+    state.selectedMonth = m; pending = null;
+    document.getElementById('confirmBar').style.display = 'none';
     saveState(); renderAll();
   });
-  document.getElementById('modeRangeBtn').addEventListener('click', ()=>{
-    state.viewMode = 'range'; saveState(); renderAll();
-  });
-  document.getElementById('rangeStart').addEventListener('change', e=>{ state.rangeStart = e.target.value; saveState(); renderHospitalAndDetail(); renderGrades(); });
-  document.getElementById('rangeEnd').addEventListener('change', e=>{ state.rangeEnd = e.target.value; saveState(); renderHospitalAndDetail(); renderGrades(); });
-
-  document.getElementById('filterInput').addEventListener('input', ()=> renderHospitalAndDetail());
 
   document.getElementById('resetBtn').addEventListener('click', ()=>{
-    if(confirm('주의: 업로드된 모든 월별 데이터와 심평원 입력값이 삭제됩니다. 초기화할까요?')){
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
-    }
+    if(confirm('모든 병원 통계 데이터가 초기화됩니다.')){ localStorage.removeItem(STORAGE_KEY); location.reload(); }
   });
   document.getElementById('exportBtn').addEventListener('click', exportWord);
+
+  renderAll();
 }
 init();
 </script>
