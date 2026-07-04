@@ -2,74 +2,55 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>좋은삼선병원 QPS 스마트 약제 지표 관리툴</title>
+<title>좋은삼선병원 QPS 약제급여 적정성평가 시스템</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
-    --navy:#0f172a; --navy-light:#1e293b; --accent:#3b82f6; --accent-soft:#eff6ff;
-    --red:#ef4444; --orange:#f97316; --yellow:#f59e0b; --green:#10b981;
+    --navy:#1e3a8a; --navy-dark:#1e3a8a; --accent:#2563eb; --accent-soft:#eff6ff;
+    --g1:#16a34a; --g2:#22c55e; --g3:#eab308; --g4:#f97316; --g5:#ef4444;
     --bg:#f8fafc; --card:#ffffff; --line:#cbd5e1; --text:#334155;
   }
   *{box-sizing:border-box;}
-  body{ font-family:'Nanum Gothic',sans-serif; background:var(--bg); color:var(--text); margin:0; padding:20px; line-height:1.5; }
-  .wrap{max-width:1750px; margin:0 auto;}
+  body{ font-family:'Nanum Gothic',sans-serif; background:var(--bg); color:var(--text); margin:0; padding:24px; line-height:1.5; }
+  .wrap{max-width:1700px; margin:0 auto;}
   
-  header{ display:flex; align-items:center; justify-content:between; background:linear-gradient(135deg, var(--navy), var(--navy-light)); color:#fff; padding:22px 26px; border-radius:12px; margin-bottom:20px; box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1); }
-  header h1{font-size:22px; font-weight:800; margin:0;}
-  header .sub{font-size:13px; color:#94a3b8; margin-top:4px;}
+  header{ display:flex; align-items:center; justify-content:space-between; background:var(--navy); color:#fff; padding:18px 24px; border-radius:12px; margin-bottom:20px; }
+  header h1{font-size:20px; font-weight:800; margin:0;}
+  header .sub{font-size:12.5px; color:#93c5fd; margin-top:4px;}
   
-  .layout-main { display: grid; grid-template-columns: 330px 1fr; gap: 24px; }
-  @media(max-width:1300px){.layout-main { grid-template-columns: 1fr; }}
+  section{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:18px; box-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1);}
+  section h2{font-size:15px; font-weight:800; margin:0 0 10px; color:var(--navy); border-bottom:2px solid #f1f5f9; padding-bottom:6px;}
+  
+  /* 메인 스코어보드 */
+  .grid5{display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:10px;}
+  @media(max-width:1000px){.grid5{grid-template-columns:1fr 1fr;}}
+  .kpi{border:1px solid var(--line); border-radius:10px; padding:14px; background:#f8fafc; text-align:center;}
+  .kpi .lbl{font-size:11.5px; color:#64748b; font-weight:700;}
+  .kpi .val{font-size:22px; font-weight:800; margin-top:4px; color:var(--navy);}
 
-  .panel-left { display: flex; flex-direction: column; gap: 20px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
-  .card h2 { font-size:15px; font-weight:800; color:var(--navy); margin:0 0 14px; border-bottom:2px solid #f1f5f9; padding-bottom:8px; display:flex; align-items:center; gap:6px; }
+  table{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px;}
+  th,td{border:1px solid var(--line); padding:8px 6px; text-align:center;}
+  th{background:#f1f5f9; font-weight:700; color:var(--navy); position:sticky; top:0; z-index:2;}
+  td.name{text-align:left; font-weight:700; background:#f8fafc;}
   
-  .upload-box{ border:2px dashed #cbd5e1; border-radius:10px; padding:30px 16px; text-align:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:13px; transition:all 0.2s; }
-  .upload-box:hover { border-color:var(--accent); background:var(--accent-soft); }
-
-  /* 핵심 스코어 카드 레이아웃 */
-  .score-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-bottom:20px; }
-  @media(max-width:1100px){.score-grid { grid-template-columns: 1fr 1fr; }}
+  .tablewrap{max-height:380px; overflow-auto; border:1px solid var(--line); border-radius:10px;}
   
-  .score-box { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; position:relative; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); transition: transform 0.2s; }
-  .score-box:hover { transform: translateY(-2px); }
-  .score-box .title { font-size:12.5px; font-weight:700; color:#64748b; }
-  .score-box .value { font-size:28px; font-weight:800; color:var(--navy); margin:6px 0; }
-  .score-box .status-bar { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:800; padding:3px 8px; border-radius:6px; color:#fff; }
-
-  /* 인식개선 대형 브리핑 알림판 */
-  .briefing-zone { border-left:6px solid var(--accent); background:#f0f7ff; padding:18px; border-radius:0 8px 8px 0; margin-bottom:20px; font-size:13.5px; color:#334155; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-  .briefing-zone h3 { margin:0 0 8px 0; font-size:15px; color:var(--navy); font-weight:800; }
-  .briefing-zone ul { margin:0; padding-left:20px; }
-  .briefing-zone li { margin-bottom:6px; }
-
-  /* 진료과별 대조 현황판 */
-  .dept-dashboard { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px; }
-  @media(max-width:900px){.dept-dashboard{grid-template-columns:1fr;}}
-  .dept-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .upload-box{ border:2px dashed #cbd5e1; border-radius:10px; padding:24px; text-align:center; color:#64748b; cursor:pointer; background:#f8fafc; font-size:13px; }
+  .upload-box:hover{border-color:var(--accent); background:var(--accent-soft);}
   
-  .status-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
-  .bg-red { background-color: var(--red); }
-  .bg-orange { background-color: var(--orange); }
-  .bg-yellow { background-color: var(--yellow); }
-  .bg-green { background-color: var(--green); }
-
-  table { width:100%; border-collapse:collapse; font-size:12px; }
-  th, td { border:1px solid var(--line); padding:8px; text-align:center; }
-  th { background:#f8fafc; color:var(--navy); font-weight:700; }
-  .table-wrap { max-height:480px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; }
+  .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0;}
+  .chip{ padding:4px 10px; background:#e2e8f0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; color:#475569; }
+  .chip.active{background:var(--accent); color:#fff;}
+  .chip .x{font-weight:800; margin-left:6px; opacity:0.5;}
   
-  .chip-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-  .chip { padding:5px 10px; background:#e2e8f0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; color:#475569; }
-  .chip.active { background:var(--accent); color:#fff; }
+  button{ font-family:inherit; border:none; border-radius:6px; padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; }
+  button.ghost{background:#fff; color:var(--navy); border:1px solid var(--line);}
+  .confirm-bar{ background:#fffbeb; border:1px solid #fef08a; padding:10px; border-radius:8px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; font-size:13px;}
+  .input-sm { padding:4px; font-size:12px; width:120px; border:1px solid var(--line); border-radius:4px; }
   
-  button { font-family:inherit; border:none; border-radius:6px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; background:var(--accent); color:#fff; }
-  button.ghost { background:#fff; color:var(--navy); border:1px solid var(--line); }
-  .input-sm { padding:6px; font-size:12px; width:120px; border:1px solid var(--line); border-radius:6px; }
-  .confirm-bar { background:#fffbeb; border:1px solid #fef08a; padding:12px; border-radius:8px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
+  .hi-alert { background-color: #fef2f2; color: #ef4444; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -77,93 +58,77 @@
 
   <header>
     <div>
-      <h1>좋은삼선병원 QPS 실무 자동화 약제 평가 시스템</h1>
-      <div class="sub">인력공백 대체형 전산 자동 분석 · 진료 자율권 보장 익명화 모니터링 프로토타입</div>
+      <h1>좋은삼선병원 QPS 약제급여 적정성평가 대시보드</h1>
+      <div class="sub">심평원 e-평가시스템 연계형 · 전산 데이터 과별 및 의사별 모니터링 시스템</div>
     </div>
-    <div class="btn-zone">
-      <button class="ghost" id="resetBtn">전체 데이터 리셋</button>
-      <button id="exportBtn">📢 진료부 회람/공지용 지표 리포트(Word) 익명출력</button>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button class="ghost" id="resetBtn">전체 데이터 초기화</button>
+      <button id="exportBtn">Word 보고서 다운로드</button>
     </div>
   </header>
 
-  <div class="layout-main">
-    
-    <div class="panel-left">
-      <div class="card">
-        <h2>📂 전산 청구 데이터 업로드</h2>
-        <div class="upload-box" id="uploadBox">
-          OCS 통계 엑셀 파일을 여기에 드롭하거나<br><b>[이 영역을 클릭]</b> 하여 선택
-          <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
-        </div>
-        <div class="confirm-bar" id="confirmBar" style="display:none;">
-          <span>적용월 선택: <input type="month" id="pendingMonth" class="input-sm"></span>
-          <button style="padding:4px 10px; font-size:12px;" id="confirmAddBtn">가져오기</button>
-        </div>
-        <div class="chip-row" id="monthChips"></div>
+  <section>
+    <h2>📂 원내 전산 데이터 로드</h2>
+    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+      <div class="upload-box" id="uploadBox" style="flex:1; min-width:300px; padding:15px;">
+        📂 OCS 약제통계 엑셀 파일을 여기에 끌어놓거나 클릭하여 선택하세요.
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
       </div>
-
-      <div class="card">
-        <h2>🎯 2026 심평원 고시 1등급 마지노선</h2>
-        <div style="font-size:12px; color:#64748b; line-height:1.7;">
-          • 급성 상기도 항생제: <b>20.0% 이하</b> [cite: 72, 248]<br>
-          • 급성 하기도 항생제: <b>30.0% 이하</b> [cite: 72, 249]<br>
-          • 주사제 처방률: <b>2.0% 이하</b> [cite: 79]<br>
-          • 처방건당 품목 상대지수: <b>0.9 이하</b> [cite: 79]
-        </div>
-        <div style="margin-top:14px; border-top:1px solid #f1f5f9; padding-top:10px;">
-          <label style="font-size:11.5px; font-weight:700; color:#64748b;">종합병원 평가군 품목수 평균값</label>
-          <input type="number" id="groupAvgItems" class="input-sm" style="width:100%; margin-top:4px;" value="3.43" step="0.01">
-        </div>
+      <div style="min-width:200px;">
+        <label style="font-size:12px; font-weight:700; color:#64748b;">평가군 품목수 평균 (상대지수용)</label>
+        <input type="number" id="groupAvgItems" class="input-sm" style="width:100%; margin-top:4px;" value="3.43" step="0.01">
       </div>
     </div>
-
-    <div class="panel-right">
-      
-      <div class="score-grid" id="mainScoreGrid"></div>
-
-      <div class="briefing-zone" id="qpsBriefingBox">
-        <h3>📢 진료부 회람용 자동 생성 코멘트 (복사하여 공지사항으로 사용 가능)</h3>
-        <p>원내 약제통계 전산 파일을 업로드하시면 진료부 연례 회람용 인식개선 코멘트가 자동으로 작성됩니다.</p>
-      </div>
-
-      <div class="dept-dashboard">
-        <div class="dept-card">
-          <h3 style="font-size:14px; margin:0 0 12px 0; color:var(--navy); font-weight:800;">🏥 진료과별 지표 달성도 현황 (회의 배포용)</h3>
-          <div id="deptSummaryContainer" style="font-size:12.5px; color:#64748b;">엑셀 데이터를 수집하면 과별 자동 요약 차트가 생성됩니다.</div>
-        </div>
-        <div class="dept-card">
-          <h3 style="font-size:14px; margin:0 0 12px 0; color:var(--navy); font-weight:800;">💡 원내 처방 품목수 연계 분석 (소화제 매칭율)</h3>
-          <div id="deptGiContainer" style="font-size:12.5px; color:#64748b;">습관성 처방 최소화를 유도하기 위한 지표 요약이 매핑됩니다.</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h2 style="margin:0;">🔍 진료과별 세부 적정성 스펙트럼 (익명 부호화 지원)</h2>
-          <div style="display:flex; gap:14px; align-items:center;">
-            <label style="font-size:12.5px; font-weight:700; color:#475569; cursor:pointer;"><input type="checkbox" id="maskingCheck" checked> 원외 회람용 의사코드 전환 고정</label>
-            <input type="text" id="filterInput" placeholder="진료과 검색" class="input-sm" style="width:140px;">
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table id="detailTable">
-            <thead>
-              <tr>
-                <th>진료과</th><th>처방의 식별코드</th><th>총처방건수</th><th>건당품목수</th><th>품목상대지수</th><th>주사제처방률</th><th>급성상기도항생제</th><th>급성하기도항생제</th><th>소화기약률</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-
+    <div class="confirm-bar" id="confirmBar" style="display:none;">
+      <span>📄 <b id="pendingFileName"></b> 데이터의 해당 연월을 지정해 주세요: </span>
+      <span><input type="month" id="pendingMonth" class="input-sm"> <button id="confirmAddBtn" style="padding:4px 8px; font-size:12px;">추가</button></span>
     </div>
+    <div class="chip-row" id="monthChips"></div>
+  </section>
 
-  </div>
+  <section id="hospitalSummarySection" style="display:none;">
+    <h2>📊 [트랙 1] 좋은삼선병원 전체 지표 현황</h2>
+    <div class="grid5" id="hospitalKpis"></div>
+  </section>
+
+  <section id="deptSection" style="display:none;">
+    <h2>🏢 [트랙 2] 진료과별 약제 지표 통계 현황</h2>
+    <div class="tablewrap">
+      <table id="deptTable">
+        <thead>
+          <tr>
+            <th>진료과명</th><th>총처방건수</th><th>건당 약품목수</th><th>품목 상대지수</th><th>주사제 처방률</th><th>급성상기도 항생제률</th><th>급성하기도 항생제률</th><th>소화기관용약 비율</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="doctorSection" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:2px solid #f1f5f9; padding-bottom:6px;">
+      <h2 style="margin:0; border:none; padding:0; color:var(--navy);">👨‍⚕️ [트랙 3] 처방 의사별 약제 지표 상세 현황</h2>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label style="font-size:12px; font-weight:700; color:#64748b; cursor:pointer;"><input type="checkbox" id="maskingCheck"> 회람용 의사명 익명화 부호 처리</label>
+        <input type="text" id="filterInput" placeholder="진료과 검색" class="input-sm">
+      </div>
+    </div>
+    <div class="tablewrap" style="max-height:450px;">
+      <table id="doctorTable">
+        <thead>
+          <tr>
+            <th>진료과</th><th>의사명 (코드)</th><th>총처방건수</th><th>건당 약품목수</th><th>품목 상대지수</th><th>주사제 처방률</th><th>급성상기도 항생제률</th><th>급성하기도 항생제률</th><th>소화기관용약 비율</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
 </div>
 
 <script>
-const STORAGE_KEY = 'qps_samsun_v10_final';
+const STORAGE_KEY = 'qps_samsun_true_intent_v1';
 let state = {
   groupAvgItems: 3.43,
   monthlyData: {},
@@ -188,29 +153,6 @@ function num(v){
   return parseFloat(String(v).replace(/,/g, '').trim()) || 0;
 }
 
-function checkUpperAnti(rate) {
-  if(rate <= 20) return { g: 1, text: '1등급(안정)', c: 'bg-green' };
-  if(rate <= 30) return { g: 2, text: '2등급(양호)', c: 'bg-green' };
-  if(rate <= 45) return { g: 3, text: '3등급(경계)', c: 'bg-yellow' };
-  return { g: 4, text: '4~5등급(집중QI)', c: 'bg-red' };
-}
-function checkLowerAnti(rate) {
-  if(rate <= 30) return { g: 1, text: '1등급(안정)', c: 'bg-green' };
-  if(rate <= 45) return { g: 2, text: '2등급(양호)', c: 'bg-green' };
-  if(rate <= 60) return { g: 3, text: '3등급(경계)', c: 'bg-yellow' };
-  return { g: 4, text: '4~5등급(집중QI)', c: 'bg-red' };
-}
-function checkInj(rate) {
-  if(rate <= 2) return { g: 1, text: '1등급(안정)', c: 'bg-green' };
-  if(rate <= 6) return { g: 2, text: '2등급(양호)', c: 'bg-green' };
-  return { g: 3, text: '3등급이하(모니터링)', c: 'bg-orange' };
-}
-function checkDrugIdx(idx) {
-  if(idx <= 0.9) return { g: 1, text: '1등급(안정)', c: 'bg-green' };
-  if(idx <= 1.0) return { g: 2, text: '2등급(보통)', c: 'bg-yellow' };
-  return { g: 3, text: '3등급이상(주의)', c: 'bg-red' };
-}
-
 function getSortedMonths(){ return Object.keys(state.monthlyData).sort(); }
 function getEffectiveRows(){
   const months = getSortedMonths(); if(!months.length) return [];
@@ -225,7 +167,6 @@ function aggregateHospital(rows){
   rows.forEach(r=>{
     const op = num(r['원외처방 건수'] || r['처방건수']); sumOP += op;
     sumItems += num(r['약품목수']);
-    sum6 += num(r['6품목이상 처방건수'] || r['6품목이상건수']);
     sumGI += num(r['소화기관용약 처방건수'] || r['소화기약건수']);
     sumInj += num(r['주사제 처방건수'] || r['주사제건수']);
     sumUpOP += num(r['급성상기도감염 처방건수'] || r['상기도건수']);
@@ -238,123 +179,131 @@ function aggregateHospital(rows){
   const targetAvg = parseFloat(state.groupAvgItems) || 3.43;
 
   return {
-    opCount: sumOP, avgItems: avgItems,
+    opCount: sumOP,
+    avgItems: avgItems,
     idxItems: targetAvg ? +(avgItems / targetAvg).toFixed(2) : 0,
-    sixRate: sumOP ? +((sum6/sumOP)*100).toFixed(2) : 0,
-    giRate: sumOP ? +((sumGI/sumOP)*100).toFixed(2) : 0,
     injRate: sumOP ? +((sumInj/sumOP)*100).toFixed(2) : 0,
     upAntiRate: sumUpOP ? +((sumUpAnti/sumUpOP)*100).toFixed(2) : 0,
-    loAntiRate: sumLoOP ? +((sumLoAnti/sumLoOP)*100).toFixed(2) : 0
+    loAntiRate: sumLoOP ? +((sumLoAnti/sumLoOP)*100).toFixed(2) : 0,
+    giRate: sumOP ? +((sumGI/sumOP)*100).toFixed(2) : 0
   };
 }
 
-function aggregateDetail(rows){
-  const map = {};
-  rows.forEach(r=>{
-    const dDept = r['진료과'] || '미상'; const dName = r['의사'] || r['처방의'] || '미상';
-    const key = dDept + '|' + dName;
-    if(!map[key]) map[key] = {dept:dDept, name:dName, op:0, items:0, six:0, gi:0, inj:0, upOP:0, upAnti:0, loOP:0, loAnti:0};
-    const op = num(r['원외처방 건수'] || r['처방건수']); map[key].op += op;
-    map[key].items += num(r['약품목수']);
-    map[key].six += num(r['6품목이상 처방건수'] || r['6품목이상건수']);
-    map[key].gi += num(r['소화기관용약 처방건수'] || r['소화기약건수']);
-    map[key].inj += num(r['주사제 처방건수'] || r['주사제건수']);
-    map[key].upOP += num(r['급성상기도감염 처방건수'] || r['상기도건수']);
-    map[key].upAnti += num(r['급성상기도감염 항생제처방건수'] || r['상기도항생제건수']);
-    map[key].loOP += num(r['급성하기도감염 처방건수'] || r['하기도건수']);
-    map[key].loAnti += num(r['급성하기도감염 항생제처방건수'] || r['기도항생제건수']);
+function renderAll(){
+  const months = getSortedMonths();
+  renderMonthChips(months);
+  
+  const rows = getEffectiveRows();
+  if(!rows.length) {
+    document.getElementById('hospitalSummarySection').style.display = 'none';
+    document.getElementById('deptSection').style.display = 'none';
+    document.getElementById('doctorSection').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('hospitalSummarySection').style.display = 'block';
+  document.getElementById('deptSection').style.display = 'block';
+  document.getElementById('doctorSection').style.display = 'block';
+
+  const hs = aggregateHospital(rows);
+  const targetAvg = parseFloat(state.groupAvgItems) || 3.43;
+
+  // 1. 병원 요약 렌더링 (심평원 기준 컷 상기용 색상 마킹)
+  document.getElementById('hospitalKpis').innerHTML = `
+    <div class="kpi"><div class="lbl">총 원외처방수</div><div class="val">${hs.opCount.toLocaleString()}건</div></div>
+    <div class="kpi"><div class="lbl">급성상기도 항생제률 (1등급컷: 20%)</div><div class="val" style="color:${hs.upAntiRate>20?'var(--g4)':'var(--g1)'}">${hs.upAntiRate}%</div></div>
+    <div class="kpi"><div class="lbl">급성하기도 항생제률 (1등급컷: 30%)</div><div class="val" style="color:${hs.loAntiRate>30?'var(--g5)':'var(--g1)'}">${hs.loAntiRate}%</div></div>
+    <div class="kpi"><div class="lbl">주사제 처방률 (1등급컷: 2%)</div><div class="val" style="color:${hs.injRate>2?'var(--g4)':'var(--g1)'}">${hs.injRate}%</div></div>
+    <div class="kpi"><div class="lbl">건당 품목수 (상대지수)</div><div class="val">${hs.avgItems}개 (${hs.idxItems})</div></div>
+  `;
+
+  // 데이터 과별 및 의사별 파싱 처리 시작
+  const deptMap = {};
+  const docMap = {};
+  let cIdx = 1;
+
+  rows.forEach(r => {
+    const dept = r['진료과'] || '기타';
+    const doc = r['의사'] || r['처방의'] || '기타';
+    const keyDoc = dept + '|' + doc;
+    const op = num(r['원외처방 건수'] || r['처방건수']);
+
+    // 과별 임시 누적
+    if(!deptMap[dept]) deptMap[dept] = { op:0, items:0, inj:0, upOP:0, upAnti:0, loOP:0, loAnti:0, gi:0 };
+    deptMap[dept].op += op;
+    deptMap[dept].items += num(r['약품목수']);
+    deptMap[dept].inj += num(r['주사제 처방건수'] || r['주사제건수']);
+    deptMap[dept].upOP += num(r['급성상기도감염 처방건수'] || r['상기도건수']);
+    deptMap[dept].upAnti += num(r['급성상기도감염 항생제처방건수'] || r['상기도항생제건수']);
+    deptMap[dept].loOP += num(r['급성하기도감염 처방건수'] || r['하기도건수']);
+    deptMap[dept].loAnti += num(r['급성하기도감염 항생제처방건수'] || r['기도항생제건수']);
+    deptMap[dept].gi += num(r['소화기관용약 처방건수'] || r['소화기약건수']);
+
+    // 의사별 임시 누적
+    if(!docMap[keyDoc]) docMap[keyDoc] = { dept:dept, name:doc, op:0, items:0, inj:0, upOP:0, upAnti:0, loOP:0, loAnti:0, gi:0 };
+    docMap[keyDoc].op += op;
+    docMap[keyDoc].items += num(r['약품목수']);
+    docMap[keyDoc].inj += num(r['주사제 처방건수'] || r['주사제건수']);
+    docMap[keyDoc].upOP += num(r['급성상기도감염 처방건수'] || r['상기도건수']);
+    docMap[keyDoc].upAnti += num(r['급성상기도감염 항생제처방건수'] || r['상기도항생제건수']);
+    docMap[keyDoc].loOP += num(r['급성하기도감염 처방건수'] || r['하기도건수']);
+    docMap[keyDoc].loAnti += num(r['급성하기도감염 항생제처방건수'] || r['기도항생제건수']);
+    docMap[keyDoc].gi += num(r['소화기관용약 처방건수'] || r['소화기약건수']);
   });
 
-  let cIdx = 1; const targetAvg = parseFloat(state.groupAvgItems) || 3.43;
-  return Object.values(map).map(m=>{
-    if(!doctorCodeMap[m.name]) { doctorCodeMap[m.name] = '의사_' + String.fromCharCode(65 + (cIdx % 26)) + cIdx; cIdx++; }
+  // 2. 진료과별 테이블 출력
+  const deptTbody = document.querySelector('#deptTable tbody');
+  deptTbody.innerHTML = Object.keys(deptMap).map(dKey => {
+    const d = deptMap[dKey];
+    const avgI = d.op ? +(d.items / d.op).toFixed(2) : 0;
+    const idxI = targetAvg ? +(avgI / targetAvg).toFixed(2) : 0;
+    const upAnti = d.upOP ? +((d.upAnti / d.upOP)*100).toFixed(2) : 0;
+    const loAnti = d.loOP ? +((d.loAnti / d.loOP)*100).toFixed(2) : 0;
+    const inj = d.op ? +((d.inj / d.op)*100).toFixed(2) : 0;
+    const gi = d.op ? +((d.gi / d.op)*100).toFixed(2) : 0;
+
+    return `
+      <tr>
+        <td class="name">${dKey}</td><td>${d.op.toLocaleString()}건</td>
+        <td style="font-weight:700;">${avgI}개</td><td>${idxI}</td>
+        <td class="${inj>2?'hi-alert':''}">${inj}%</td>
+        <td class="${upAnti>20?'hi-alert':''}">${upAnti}%</td>
+        <td class="${loAnti>30?'hi-alert':''}">${loAnti}%</td>
+        <td>${gi}%</td>
+      </tr>
+    `;
+  }).join('');
+
+  // 3. 의사별 테이블 출력
+  const useMasking = document.getElementById('maskingCheck').checked;
+  const filterText = document.getElementById('filterInput').value.toLowerCase();
+  const docTbody = document.querySelector('#doctorTable tbody');
+
+  const docList = Object.values(docMap).map(m => {
+    if(!doctorCodeMap[m.name]) { doctorCodeMap[m.name] = '처방의_' + String.fromCharCode(65 + (cIdx % 26)) + cIdx; cIdx++; }
     return {
       dept: m.dept, name: m.name, code: doctorCodeMap[m.name], op: m.op,
       dc: m.op ? +(m.items/m.op).toFixed(2) : 0,
       idx: m.op && targetAvg ? +((m.items/m.op)/targetAvg).toFixed(2) : 0,
-      six: m.op ? +((m.six/m.op)*100).toFixed(2) : 0,
-      gi: m.op ? +((m.gi/m.op)*100).toFixed(2) : 0,
       inj: m.op ? +((m.inj/m.op)*100).toFixed(2) : 0,
-      upAnti: m.upOP ? +((m.upAnti/m.upOP)*100).toFixed(2) : 0,
-      loAnti: m.loOP ? +((m.loAnti/m.loOP)*100).toFixed(2) : 0
+      upAnti: m.upOP ? +((m.upAnti/m.upOP)*100).toFixed(2) : '-',
+      loAnti: m.loOP ? +((m.loAnti/m.loOP)*100).toFixed(2) : '-',
+      gi: m.op ? +((m.gi/m.op)*100).toFixed(2) : 0
     };
-  }).filter(r => r.op > 2);
-}
+  }).filter(d => d.op > 2);
 
-function renderAll(){
-  const months = getSortedMonths(); renderMonthChips(months);
-  const rows = getEffectiveRows();
-  if(!rows.length) return;
-
-  const hs = aggregateHospital(rows);
-  const details = aggregateDetail(rows);
-  const useMasking = document.getElementById('maskingCheck').checked;
-
-  const resUp = checkUpperAnti(hs.upAntiRate);
-  const resLo = checkLowerAnti(hs.loAntiRate);
-  const resInj = checkInj(hs.injRate);
-  const resIdx = checkDrugIdx(hs.idxItems);
-
-  // 1. 네비게이션 스코어보드 출력
-  document.getElementById('mainScoreGrid').innerHTML = `
-    <div class="score-box"><div class="title">급성 상기도 항생제률 (컷:20%)</div><div class="value">${hs.upAntiRate}%</div><div class="status-bar ${resUp.c}">${resUp.text}</div></div>
-    <div class="score-box"><div class="title">급성 하기도 항생제률 (컷:30%)</div><div class="value">${hs.loAntiRate}%</div><div class="status-bar ${resLo.c}">${resLo.text}</div></div>
-    <div class="score-box"><div class="title">주사제 처방률 (컷:2%)</div><div class="value">${hs.injRate}%</div><div class="status-bar ${resInj.c}">${resInj.text}</div></div>
-    <div class="score-box"><div class="title">품목수 상대지수 (컷:0.9)</div><div class="value">${hs.idxItems}</div><div class="status-bar ${resIdx.c}">${resIdx.text} (${hs.avgItems}개)</div></div>
-  `;
-
-  // 2. 진료부 공지전파용 자동 텍스트 브리핑 빌드 (실무 100% 효율화)
-  document.getElementById('qpsBriefingBox').innerHTML = `
-    <h3>📢 진료부 회람/공지용 지표 분석 (그대로 복사하여 사용 가능)</h3>
-    <ul>
-      <li><b>항생제 처방 영역:</b> 본원 급성 상기도 항생제 처방률은 <b>${hs.upAntiRate}%</b>로 관리되고 있으나, 2026 의료질평가 강화를 대비해 <b>급성 하기도 항생제 처방률(${hs.loAntiRate}%)</b> 부문의 광범위 약제 처방 지양 및 자율 적정성 관리가 필요합니다.</li>
-      <li><b>주사제 및 처방 품목수:</b> 본원 주사제 처방률은 <b>${hs.injRate}%</b>로 동급 병원 평균 대비 안정적인 마지노선을 유지하고 있습니다. 단, 원내 평균 약품목수를 낮추기 위해 주진단과 관련 없는 습관적인 소화기관용약(현재 본원 평균비율: <b>${hs.giRate}%</b>) 처방전 동시 삽입 최소화를 당부드립니다.</li>
-      <li>※ 본 자료는 의료진의 진료 자율권을 100% 보장하며, 원내 약제 평판 지표 방어를 위한 인식개선 공유 자료입니다. 세부 식별코드는 QPS실을 통해 자율 매칭 확인 가능합니다.</li>
-    </ul>
-  `;
-
-  // 3. 진료과별 묶음 요약 현황판 생성 (의사 저격 배제)
-  const deptMap = {};
-  details.forEach(d => {
-    if(!deptMap[d.dept]) deptMap[d.dept] = { name: d.dept, op: 0, upAntiSum: 0, upCount: 0, loAntiSum:0, loCount:0, giSum:0, dcSum: 0, count:0 };
-    deptMap[d.dept].op += d.op;
-    deptMap[d.dept].dcSum += d.dc;
-    deptMap[d.dept].giSum += d.gi;
-    if(d.upAnti > 0) { deptMap[d.dept].upAntiSum += d.upAnti; deptMap[d.dept].upCount++; }
-    if(d.loAnti > 0) { deptMap[d.dept].loAntiSum += d.loAnti; deptMap[d.dept].loCount++; }
-    deptMap[d.dept].count++;
-  });
-
-  const depts = Object.values(deptMap);
-  
-  // 과별 요약 가시화
-  document.getElementById('deptSummaryContainer').innerHTML = depts.map(dp => {
-    const avgUp = dp.upCount ? (dp.upAntiSum / dp.upCount).toFixed(1) : 0;
-    const avgLo = dp.loCount ? (dp.loAntiSum / dp.loCount).toFixed(1) : 0;
-    return `<div style="margin-bottom:8px; border-bottom:1px dashed #f1f5f9; padding-bottom:4px;">
-      <b>🏢 ${dp.name}</b>: 건당 품목수 평균 ${ (dp.dcSum/dp.count).toFixed(2) }개 / 상기도항생제 평균: ${avgUp}% / 하기도항생제 평균: ${avgLo}%
-    </div>`;
-  }).join('');
-
-  document.getElementById('deptGiContainer').innerHTML = depts.map(dp => {
-    const avgGi = (dp.giSum / dp.count).toFixed(1);
-    return `<div style="margin-bottom:8px; border-bottom:1px dashed #f1f5f9; padding-bottom:4px;">
-      <b>💊 ${dp.name}</b>: 소화기관용약 처방 가중치 평균: <span style="color:${avgGi > 30 ? 'var(--orange)':'var(--green)'}; font-weight:bold;">${avgGi}%</span>
-    </div>`;
-  }).join('');
-
-  // 4. 메인 분석 테이블 출력
-  const filterText = document.getElementById('filterInput').value.toLowerCase();
-  const tbody = document.querySelector('#detailTable tbody');
-  tbody.innerHTML = details
+  docTbody.innerHTML = docList
     .filter(d => d.dept.toLowerCase().includes(filterText))
     .map(d => {
-      const nameTag = useMasking ? d.code : `${d.name} (${d.code})`;
+      const displayName = useMasking ? d.code : `${d.name} (${d.code})`;
       return `
         <tr>
-          <td class="name">${d.dept}</td><td><b>nameTag</b></td><td>${d.op}건</td>
-          <td>${d.dc}개</td><td><span class="status-badge ${checkDrugIdx(d.idx).c}">${d.idx}</span></td>
-          <td>${d.inj}%</td><td>${d.upAnti}%</td><td>${d.loAnti}%</td><td>${d.gi}%</td>
+          <td>${d.dept}</td><td class="name">${displayName}</td><td>${d.op}건</td>
+          <td>${d.dc}개</td><td>${d.idx}</td>
+          <td class="${d.inj>2?'hi-alert':''}">${d.inj}%</td>
+          <td class="${d.upAnti>20?'hi-alert':''}">${d.upAnti === '-' ? '-' : d.upAnti + '%'}</td>
+          <td class="${d.loAnti>30?'hi-alert':''}">${d.loAnti === '-' ? '-' : d.loAnti + '%'}</td>
+          <td>${d.gi}%</td>
         </tr>
       `;
     }).join('');
@@ -362,9 +311,14 @@ function renderAll(){
 
 function renderMonthChips(months){
   const wrap = document.getElementById('monthChips');
-  wrap.innerHTML = months.map(m => `<div class="chip ${state.selectedMonth === m ? 'active' : ''}" onclick="changeMonth('${m}')">${m}</div>`).join('');
+  wrap.innerHTML = months.map(m => `<div class="chip ${state.selectedMonth === m ? 'active' : ''}" onclick="changeMonth('${m}')">${m} <span class="x" onclick="deleteMonth(event, '${m}')">✕</span></div>`).join('');
 }
 function changeMonth(m){ state.selectedMonth = m; saveState(); renderAll(); }
+function deleteMonth(e, m){
+  e.stopPropagation(); if(!confirm(`${m} 데이터를 삭제하시겠습니까?`)) return;
+  delete state.monthlyData[m]; if(state.selectedMonth === m) state.selectedMonth = null;
+  saveState(); renderAll();
+}
 
 function findHeaderRowIndex(aoa){
   for(let i=0;i<aoa.length;i++){ if(aoa[i] && aoa[i].some(c=>c==='진료과' || c==='진료과명')) return i; }
@@ -379,87 +333,13 @@ function parseSheet(aoa){
   const opIdx = headerRow.findIndex(c => String(c).includes('처방건수') || String(c).includes('원외처방'));
   const itemIdx = headerRow.findIndex(c => String(c).includes('약품목수'));
   const injIdx = headerRow.findIndex(c => String(c).includes('주사제'));
-  const upOPIdx = headerRow.findIndex(c => String(c).includes('상기도감염 처방건수') || String(c).includes('상기도건수'));
+  const upOPIdx = headerRow.findIndex(c => String(c).includes('상기도건수') || String(c).includes('상기도감염 처방건수'));
   const upAntiIdx = headerRow.findIndex(c => String(c).includes('상기도항생제') || String(c).includes('상기도감염 항생제'));
-  const loOPIdx = headerRow.findIndex(c => String(c).includes('하기도감염 처방건수') || String(c).includes('하기도건수'));
+  const loOPIdx = headerRow.findIndex(c => String(c).includes('하기도건수') || String(c).includes('하기도감염 처방건수'));
   const loAntiIdx = headerRow.findIndex(c => String(c).includes('하기도항생제') || String(c).includes('하기도감염 항생제'));
   const giIdx = headerRow.findIndex(c => String(c).includes('소화기관') || String(c).includes('소화기약'));
   const sixIdx = headerRow.findIndex(c => String(c).includes('6품목'));
 
   const detailRows = []; let currentDept = null;
   for(let r = hIdx+1; r<aoa.length; r++){
-    const row = aoa[r]; if(!row || row.length === 0) continue;
-    const dept = row[deptIdx] || currentDept; currentDept = dept;
-    const doctor = row[docIdx]; if(!doctor || doctor === '소계' || doctor === '합계' || doctor === '총계') continue;
-
-    detailRows.push({
-      진료과: dept, 의사: doctor,
-      '원외처방 건수': row[opIdx] || 0,
-      '약품목수': row[itemIdx] || 0,
-      '6품목이상 처방건수': sixIdx >= 0 ? row[sixIdx] : 0,
-      '주사제 처방건수': injIdx >= 0 ? row[injIdx] : 0,
-      '급성상기도감염 처방건수': upOPIdx >= 0 ? row[upOPIdx] : 0,
-      '급성상기도감염 항생제처방건수': upAntiIdx >= 0 ? row[upAntiIdx] : 0,
-      '급성하기도감염 처방건수': loOPIdx >= 0 ? row[loOPIdx] : 0,
-      '급성하기도감염 항생제처방건수': loAntiIdx >= 0 ? row[loAntiIdx] : 0,
-      '소화기관용약 처방건수': giIdx >= 0 ? row[giIdx] : 0
-    });
-  }
-  return {detailRows};
-}
-
-function handleFile(file){
-  const reader = new FileReader();
-  reader.onload = (e)=>{
-    const data = new Uint8Array(e.target.result);
-    const wb = XLSX.read(data, {type:'array'});
-    let sheetName = wb.SheetNames.find(n=>n.includes('약제')) || wb.SheetNames[0];
-    const parsed = parseSheet(XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, raw:true}));
-    if(!parsed) return alert('헤더 양식을 식별하지 못했습니다.');
-    pending = {detailRows: parsed.detailRows};
-    document.getElementById('confirmBar').style.display = 'flex';
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function exportWord(){
-  const rows = getEffectiveRows(); if(!rows.length) return alert('데이터 없음');
-  const hs = aggregateHospital(rows);
-  const html = `
-  <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-  <body>
-    <h2 style="text-align:center;">좋은삼선병원 진료부 지표 안내 통보문</h2>
-    <p>본원 상기도 항생제: ${hs.upAntiRate}% / 하기도 항생제: ${hs.loAntiRate}% / 주사제 처방률: ${hs.injRate}%</p>
-    <p>본 자료는 적정 처방 인식 제고를 위한 안내문입니다.</p>
-  </body></html>`;
-  const blob = new Blob(['\ufeff', html], {type:'application/msword'});
-  const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-  link.download = `좋은삼선병원_진료부_회람지표.doc`; link.click();
-}
-
-function init(){
-  loadState();
-  document.getElementById('groupAvgItems').value = state.groupAvgItems;
-  document.getElementById('groupAvgItems').addEventListener('input', e=>{ state.groupAvgItems = e.target.value; saveState(); renderAll(); });
-  document.getElementById('filterInput').addEventListener('input', renderAll);
-  document.getElementById('maskingCheck').addEventListener('change', renderAll);
-
-  const uploadBox = document.getElementById('uploadBox');
-  const fileInput = document.getElementById('fileInput');
-  uploadBox.addEventListener('click', ()=>fileInput.click());
-  fileInput.addEventListener('change', e=>{ if(e.target.files.length) handleFile(e.target.files[0]); });
-
-  document.getElementById('confirmAddBtn').addEventListener('click', ()=>{
-    const m = document.getElementById('pendingMonth').value; if(!m) return alert('월 지정 필수');
-    state.monthlyData[m] = { detailRows: pending.detailRows }; state.selectedMonth = m; pending = null;
-    document.getElementById('confirmBar').style.display = 'none'; saveState(); renderAll();
-  });
-
-  document.getElementById('resetBtn').addEventListener('click', ()=>{ if(confirm('리셋?')){ localStorage.removeItem(STORAGE_KEY); location.reload(); } });
-  document.getElementById('exportBtn').addEventListener('click', exportWord);
-  renderAll();
-}
-init();
-</script>
-</body>
-</html>
+    const row = ao
