@@ -57,7 +57,7 @@
   <header>
     <div>
       <h1>좋은삼선병원 QPS 약제급여 적정성평가 시스템</h1>
-      <div class="sub">의사별 개별 실데이터 파싱 복구 및 UI 완전 교정본 (v2.3)</div>
+      <div class="sub">의사별 요약 엑셀 전용 판독 엔진 적용본 (v3.1)</div>
     </div>
     <button class="ghost" style="font-size:12px; padding:6px 12px;" id="resetBtn">이력 전체 초기화</button>
   </header>
@@ -66,7 +66,7 @@
     <div class="upload-box" id="uploadBox">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기 클릭)</div>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
     <div>
-      <label style="font-size:11px; font-weight:700; color:#475569;">2단계: 조회 연월</label>
+      <label style="font-size:11px; font-weight:700; color:#475569;">2단계: 데이터 조회 연월</label>
       <input type="month" id="pendingMonth" class="input-sm">
     </div>
     <div>
@@ -100,7 +100,7 @@
           </tr>
         </thead>
         <tbody id="abxTableBody">
-          <tr><td colspan="5" style="padding:20px; color:#94a3b8; font-weight:700;">데이터를 생성해 주세요.</td></tr>
+          <tr><td colspan="5" style="padding:20px; color:#94a3b8; font-weight:700;">상단 엑셀 로드 후 3단계 생성 버튼을 클릭해 주세요.</td></tr>
         </tbody>
       </table>
       
@@ -112,10 +112,11 @@
           </tr>
         </thead>
         <tbody id="etcTableBody">
-          <tr><td colspan="5" style="padding:20px; color:#94a3b8; font-weight:700;">데이터를 생성해 주세요.</td></tr>
+          <tr><td colspan="5" style="padding:20px; color:#94a3b8; font-weight:700;">상단 엑셀 로드 후 3단계 생성 버튼을 클릭해 주세요.</td></tr>
         </tbody>
       </table>
     </section>
+
     <section>
       <h2>📊 QPS 지표 지향형 독립식 그래프 스크린</h2>
       <div class="chart-grid">
@@ -168,7 +169,7 @@
   <div id="tab4" class="tab-content">
     <section>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0; border:none;">📋 QPS 정례 위원회 보고서 서식 (직접 타이핑 편집 가능)</h2>
+        <h2 style="margin:0; border:none;">📋 QPS 정례 위원회 보고서 서식 (클릭 후 직접 타이핑 편집 가능✍️)</h2>
         <button id="exportBtn">Word 파일 자율 배포용 다운로드</button>
       </div>
       <div class="report-view" id="reportViewZone" contenteditable="true">
@@ -181,7 +182,7 @@
 
 <script>
 Chart.register(ChartDataLabels);
-const STORAGE_KEY = 'qps_samsun_master_v2_3';
+const STORAGE_KEY = 'qps_samsun_master_v3_1';
 let state = { groupAvgItems: 3.43, monthlyData: {}, selectedMonth: null };
 let fileDataCached = null; let doctorCodeMap = {}; let myCharts = {};
 
@@ -203,7 +204,7 @@ function renderAll(){
   if(!m || !state.monthlyData[m]) return;
 
   const h = state.monthlyData[m].hiraSummary || {};
-  const details = state.monthlyData[m].detailRows || [];
+  const docListRaw = state.monthlyData[m].docList || [];
   const targetAvg = parseFloat(state.groupAvgItems) || 3.43;
 
   document.getElementById('abxTableBody').innerHTML = `
@@ -226,35 +227,31 @@ function renderAll(){
 
   const useMasking = document.getElementById('maskingCheck').checked;
   const filterText = document.getElementById('filterInput').value.toLowerCase();
+  
   let cIdx = 1;
-
-  // [수정 핵심] 의사별 실제 데이터를 연산하여 배열 생성. 데이터 없으면 null.
-  const docList = details.map(d => {
+  const docList = docListRaw.map(d => {
     const docName = d.의사 || '미상';
     if(!doctorCodeMap[docName]) { doctorCodeMap[docName] = '처방의_' + String.fromCharCode(65 + (cIdx % 26)) + cIdx; cIdx++; }
-    const op = num(d['원외처방 건수']);
     
-    // 평균치 덮어쓰기 금지. 진짜 본인 데이터만 씀.
-    const dc = d['약품목수'] > 0 ? (d['약품목수'] / op) : null;
-    const idx = dc !== null ? (dc / targetAvg) : null;
-    const inj = d['주사제 처방건수'] > 0 ? (d['주사제 처방건수'] / op * 100) : null;
-    const upAnti = d['급성상기도감염 처방건수'] > 0 ? (d['급성상기도감염 항생제처방건수'] / d['급성상기도감염 처방건수'] * 100) : null;
-    const loAnti = d['급성하기도감염 처방건수'] > 0 ? (d['급성하기도감염 항생제처방건수'] / d['급성하기도감염 처방건수'] * 100) : null;
-    const gi = d['소화기관용약 처방건수'] > 0 ? (d['소화기관용약 처방건수'] / op * 100) : null;
+    // 상대지수 실시간 연산
+    let idxVal = null;
+    if(d.dc !== null) idxVal = d.dc / targetAvg;
 
-    return { dept: d['진료과'] || '기타', name: docName, code: doctorCodeMap[docName], op: op, dc, idx, inj, upAnti, loAnti, gi };
-  }).filter(d => d.op > 0);
+    return {
+      dept: d.진료과, name: docName, code: doctorCodeMap[docName], op: d.op,
+      dc: d.dc, idx: idxVal, inj: d.inj, upAnti: d.upAnti, loAnti: d.loAnti, gi: d.gi, six: d.six
+    };
+  });
 
-  // 값 렌더링용 헬퍼 함수 (null 이면 '-' 출력)
   const renderVal = (val, isPct = false) => val !== null ? val.toFixed(1) + (isPct ? '%' : '') : '<span style="color:#cbd5e1;">-</span>';
 
-  // 2번 탭
+  // 2번 탭 렌더링
   const docTbody = document.getElementById('doctorTableBody');
   const filteredDocs = docList.filter(d => d.dept.toLowerCase().includes(filterText));
   docTbody.innerHTML = filteredDocs.length ? filteredDocs.map(d => {
-    const displayName = useMasking ? d.code : d.name; // <--- 이름 옆에 괄호 코드 나오는 것 제거!
+    const displayName = useMasking ? d.code : d.name;
     return `<tr>
-      <td>${d.dept}</td><td class="name" style="font-weight:800;">${displayName}</td><td>${d.op}건</td>
+      <td>${d.dept}</td><td class="name" style="font-weight:800;">${displayName}</td><td>${d.op.toLocaleString()}건</td>
       <td>${renderVal(d.dc, false)}</td><td>${renderVal(d.idx, false)}</td>
       <td class="${d.inj!==null&&d.inj>2?'hi-alert':''}">${renderVal(d.inj, true)}</td>
       <td class="${d.upAnti!==null&&d.upAnti>20?'hi-alert':''}">${renderVal(d.upAnti, true)}</td>
@@ -263,13 +260,13 @@ function renderAll(){
     </tr>`;
   }).join('') : `<tr><td colspan="9" style="padding:20px; color:#94a3b8; text-align:center;">조건에 맞는 데이터가 없습니다.</td></tr>`;
 
-  // 3번 탭
+  // 3번 탭 렌더링
   const badTbody = document.getElementById('badDoctorTableBody');
   const badDocs = docList.filter(d => (d.inj!==null&&d.inj>2) || (d.upAnti!==null&&d.upAnti>20) || (d.loAnti!==null&&d.loAnti>30) || (d.idx!==null&&d.idx>1.0));
   badTbody.innerHTML = badDocs.length ? badDocs.map(d => {
     const displayName = useMasking ? d.code : d.name;
     return `<tr>
-      <td>${d.dept}</td><td class="name" style="color:var(--g5); font-weight:800;">${displayName}</td><td>${d.op}건</td>
+      <td>${d.dept}</td><td class="name" style="color:var(--g5); font-weight:800;">${displayName}</td><td>${d.op.toLocaleString()}건</td>
       <td>${renderVal(d.dc, false)}</td><td>${renderVal(d.idx, false)}</td>
       <td class="${d.inj!==null&&d.inj>2?'hi-alert':''}">${renderVal(d.inj, true)}</td>
       <td class="${d.upAnti!==null&&d.upAnti>20?'hi-alert':''}">${renderVal(d.upAnti, true)}</td>
@@ -277,6 +274,24 @@ function renderAll(){
       <td>${renderVal(d.gi, true)}</td>
     </tr>`;
   }).join('') : `<tr><td colspan="9" style="padding:20px; font-weight:bold; color:var(--g1); text-align:center;">🎯 축하합니다. 모든 의사가 1등급 기준선 내부에서 처방 중입니다.</td></tr>`;
+
+  // 진료과별 소화기관용약 최대 처방과 추출
+  let maxGiDeptName = "특정 진료과";
+  let maxGiDeptRate = 0;
+  let deptGiAgg = {};
+  docList.forEach(d => {
+    if(d.gi !== null) {
+      if(!deptGiAgg[d.dept]) deptGiAgg[d.dept] = { sumGi:0, count:0, op:0 };
+      deptGiAgg[d.dept].sumGi += (d.gi * d.op);
+      deptGiAgg[d.dept].op += d.op;
+    }
+  });
+  for(let k in deptGiAgg) {
+    if(deptGiAgg[k].op > 30) {
+      let avg = deptGiAgg[k].sumGi / deptGiAgg[k].op;
+      if(avg > maxGiDeptRate) { maxGiDeptRate = avg; maxGiDeptName = k; }
+    }
+  }
 
   // 4번 탭
   document.getElementById('reportViewZone').innerHTML = `
@@ -297,11 +312,11 @@ function renderAll(){
           <td style="padding:8px; border:1px solid #cbd5e1; color:var(--navy);">${h.mildRate}%</td>
         </tr>
       </table>
-      <p style="font-size:12.5px; color:#475569;">※ <b>평가 진단:</b> 상기도 영역은 양호하나, 하기도 항생제 처방률 및 주사제 처방 영역에서 1등급 진입 방어를 위한 미세 감축 조정이 필요합니다.</p>
+      <p style="font-size:12.5px; color:#475569;">※ <b>평가 진단:</b> 약품목수 및 소화기관용약(전체 ${h.giRate}%) 처방 영역에서 1등급 진입 방어를 위한 감축 조정이 필요합니다. 특히 <b>${maxGiDeptName}</b>의 소화기관용약 처방률이 평균 <b>${maxGiDeptRate.toFixed(1)}%</b>로 관찰되어, 주상병 누락 방지 및 처방 자제 공지가 시급합니다.</p>
       <h4 style="font-size:14px; color:var(--navy); margin:15px 0 5px 0;">2. 진료부 공통 질 향상 실천 가이드라인 (Action Item)</h4>
       <ul style="font-size:12.5px; color:#334155; padding-left:20px; line-height:1.8;">
-        <li><b>급성 상·하기도 항생제 사용 절제:</b> 감기 등 급성 상기도 감염 시 항생제 처방을 지양해 주시고, 폐렴 합병증이 없는 급성 하기도 감염 시 광범위 항생제 루틴 처방을 최소화해 주십시오.</li>
-        <li><b>소화기관용약(소화제) 처방 일대 제한:</b> 주진단과 인과관계 없는 소화기관용약 처방은 지양을 권고드립니다. <b>건당 처방 품목수 3개 이하 유지</b> 시 원내 약제 인센티브를 방어할 수 있습니다.</li>
+        <li><b>급성 상·하기도 항생제 사용 절제:</b> 폐렴 합병증이 없는 급성 하기도 감염 시 광범위 항생제 루틴 처방을 최소화해 주십시오.</li>
+        <li><b>소화기관용약(소화제) 처방 일대 제한:</b> 주진단과 인과관계 없는 소화기관용약 처방 지양을 권고드립니다. <b>건당 처방 품목수 3개 이하 유지</b> 시 원내 약제 인센티브를 방어할 수 있습니다.</li>
         <li><b>소화기관용약 주상병 연동 고시:</b> 심평원 산출식 기준에 따라, <b>반드시 소화기계 주상병(K20~K93, C15~C26, M00~M25, M40~M54)</b>이 입력된 경우에만 인정되며 임의 동시 처방은 삭감 요인이 됩니다.</li>
       </ul>
     </div>
@@ -322,25 +337,25 @@ function initQpsCharts(h) {
   myCharts.abx = new Chart(ctxAbx, {
     type: 'bar',
     data: { labels: ['전체상병', '호흡기전체', '상기도', '하기도', '그외호흡기'], datasets: [{ label: '항생제 처방률 (%)', data: [h.totalAnti, h.respAnti, h.upAnti, h.loAnti, h.etcAnti], backgroundColor: ['#64748b', '#94a3b8', '#ef4444', '#f97316', '#cbd5e1'] }] },
-    options: { layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: dlConfig, title: { display: true, text: '상병별 항생제 처방률 추이' } }, scales: { y: { max: 100 } } }
+    options: { layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: dlConfig, title: { display: true, text: '상병별 항생제 처방률 추이' } }, scales: { y: { min: 0, max: 100 } } }
   });
 
   myCharts.inj = new Chart(ctxInj, {
     type: 'bar',
     data: { labels: ['본원 주사제률', '1등급 상한선'], datasets: [{ label: '처방률 (%)', data: [h.injRate, 2.0], backgroundColor: ['#f97316', '#10b981'] }] },
-    options: { layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: dlConfig, title: { display: true, text: '주사제 처방률 목표 대조' } }, scales: { y: { max: Math.max(10, h.injRate + 3) } } }
+    options: { layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: dlConfig, title: { display: true, text: '주사제 처방률 목표 대조' } }, scales: { y: { min: 0, max: Math.max(10, h.injRate + 3) } } }
   });
 
   myCharts.itemsCount = new Chart(ctxItemsCount, {
     type: 'bar',
     data: { labels: ['건당 평균 약품목수'], datasets: [{ label: '처방 품목수 (개)', data: [h.avgItems], backgroundColor: ['#2563eb'] }] },
-    options: { layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', offset:6, font:{weight:'bold'}}, title: { display: true, text: '처방건당 평균 약품목수 (단위: 개)' } }, scales: { y: { max: 6 } } }
+    options: { layout: { padding: { top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', offset:6, font:{weight:'bold'}}, title: { display: true, text: '처방건당 평균 약품목수 (단위: 개)' } }, scales: { y: { min: 0, max: 6 } } }
   });
 
   myCharts.itemsRates = new Chart(ctxItemsRates, {
     type: 'line',
     data: { labels: ['6품목비율', '소화기약률', '경증점유율'], datasets: [{ label: '원내 지표 비율 (%)', data: [h.sixRate, h.giRate, h.mildRate], borderColor: '#10b981', backgroundColor: '#10b981', fill: false, tension: 0.1 }] },
-    options: { layout: { padding: { left: 40, right: 40, top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: dlConfig, title: { display: true, text: '다량처방 분과별 요인 곡선 (단위: %)' } }, scales: { y: { max: 100 } } }
+    options: { layout: { padding: { left: 40, right: 40, top: 30 } }, responsive: true, maintainAspectRatio: false, plugins: { datalabels: dlConfig, title: { display: true, text: '다량처방 분과별 요인 곡선 (단위: %)' } }, scales: { x: { offset: true }, y: { min: 0, max: 100 } } }
   });
 }
 
@@ -367,45 +382,46 @@ function parseHiraSummary(aoa) {
   return { totalOP, totalAnti, totalCepha, totalMacro, respOP, respAnti, respCepha, respMacro, upOP, upAnti, upCepha, upMacro, loOP, loAnti, loCepha, loMacro, etcOP, etcAnti, etcCepha, etcMacro, mildRate, avgItems, idxItems, giRate, sixRate, injRate };
 }
 
-function findHeaderRowIndex(aoa){ for(let i=0; i<aoa.length; i++){ if(aoa[i] && aoa[i].some(c=>String(c||'').includes('차트') || String(c||'').includes('의사'))) return i; } return -1; }
+function findHeaderRowIndex(aoa){
+  for(let i=0; i<aoa.length; i++){ if(aoa[i] && aoa[i].some(c=>String(c||'').replace(/\s/g,'').includes('의사'))) return i; }
+  return -1;
+}
 
-// [수정 핵심] 하단 환자 데이터 집계 로직. 
+// 의사별 실데이터 직접 파싱 로직
 function parseSheet(aoa){
   const hIdx = findHeaderRowIndex(aoa); if(hIdx<0) return [];
-  const headerRow = aoa[hIdx];
-  const deptIdx = headerRow.findIndex(c => String(c||'').includes('과'));
-  const docIdx = headerRow.findIndex(c => String(c||'').includes('의사'));
-  const diagIdx = headerRow.findIndex(c => String(c||'').includes('주상병'));
-  const antiIdx = headerRow.findIndex(c => String(c||'').includes('항생제 처방'));
+  const headerRow = aoa[hIdx].map(c => String(c||'').replace(/\s/g,''));
   
-  const doctorMap = {};
+  const deptIdx = headerRow.findIndex(c => c.includes('진료과'));
+  const docIdx = headerRow.findIndex(c => c.includes('의사'));
+  const opIdx = headerRow.findIndex(c => c.includes('원외처방건'));
+  const dcIdx = headerRow.findIndex(c => c.includes('처방건당약품목수'));
+  const sixRateIdx = headerRow.findIndex(c => c.includes('6품목이상') && c.includes('비율'));
+  const giRateIdx = headerRow.findIndex(c => c.includes('소화기관용약') && c.includes('비율'));
+
+  const docList = [];
+  let currentDept = '기타과';
+
   for(let r = hIdx+1; r<aoa.length; r++){
-    const row = aoa[r]; if(!row) continue;
-    const doc = row[docIdx]; if(!doc || String(doc).trim() === '') continue; 
-    const dept = row[deptIdx] || '기타과';
-    const key = dept + '|' + doc;
+    const row = aoa[r]; if(!row || !row.some(c=>c!==undefined)) continue;
     
-    if(!doctorMap[key]) doctorMap[key] = {
-      진료과: dept, 의사: doc, '원외처방 건수':0, '약품목수':0, '주사제 처방건수':0,
-      '급성상기도감염 처방건수':0, '급성상기도감염 항생제처방건수':0, '급성하기도감염 처방건수':0, '급성하기도감염 항생제처방건수':0,
-      '소화기관용약 처방건수':0, '6품목이상 처방건수':0
-    };
+    if(row[deptIdx]) currentDept = String(row[deptIdx]).trim();
+    const doc = row[docIdx]; if(!doc || String(doc).trim() === '') continue;
     
-    doctorMap[key]['원외처방 건수']++;
-    
-    // 처방 상병코드 기반으로 분모/분자 직접 카운팅
-    const isAnti = antiIdx >= 0 && String(row[antiIdx]||'').includes('O');
-    const diag = String(row[diagIdx] || '');
-    if(diag.match(/J0[0-6]/)) {
-      doctorMap[key]['급성상기도감염 처방건수']++;
-      if(isAnti) doctorMap[key]['급성상기도감염 항생제처방건수']++;
-    }
-    if(diag.match(/J2[0-2]/)) {
-      doctorMap[key]['급성하기도감염 처방건수']++;
-      if(isAnti) doctorMap[key]['급성하기도감염 항생제처방건수']++;
-    }
+    const opCount = num(row[opIdx]);
+    if(opCount <= 0) continue;
+
+    docList.push({
+      진료과: currentDept,
+      의사: String(doc).trim(),
+      op: opCount,
+      dc: dcIdx >= 0 ? num(row[dcIdx]) : null,
+      six: sixRateIdx >= 0 ? num(row[sixRateIdx]) : null,
+      gi: giRateIdx >= 0 ? num(row[giRateIdx]) : null,
+      inj: null, upAnti: null, loAnti: null
+    });
   }
-  return Object.values(doctorMap);
+  return docList;
 }
 
 function handleFile(file){
@@ -413,7 +429,7 @@ function handleFile(file){
   reader.onload = (e)=>{
     const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, {type:'array'});
     const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true});
-    fileDataCached = { hiraSummary: parseHiraSummary(aoa), detailRows: parseSheet(aoa) };
+    fileDataCached = { hiraSummary: parseHiraSummary(aoa), docList: parseSheet(aoa) };
     document.getElementById('fileNameDisplay').textContent = `📄 리소스 대기 완료: ${file.name}`;
   };
   reader.readAsArrayBuffer(file);
