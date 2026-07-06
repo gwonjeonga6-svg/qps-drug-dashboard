@@ -40,7 +40,8 @@
   td.name{text-align:left; font-weight:700; background:#f8fafc;}
   .tablewrap{max-height:450px; overflow-y:auto; border:1px solid var(--line); border-radius:10px;}
   
-  .upload-box{ border: 2px dashed var(--accent); border-radius:10px; padding:18px; text-align:center; color:var(--accent); cursor:pointer; background:var(--accent-soft); font-size:13px; font-weight:700; flex:1; min-width:250px; }
+  /* 업로드 박스를 label 태그로 변경하여 클릭 보장 */
+  .upload-box{ display: block; border: 2px dashed var(--accent); border-radius:10px; padding:18px; text-align:center; color:var(--accent); cursor:pointer; background:var(--accent-soft); font-size:13px; font-weight:700; flex:1; min-width:250px; }
   .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0;}
   .chip{ padding:4px 10px; background:#e2e8f0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; color:#475569; }
   .chip.active{background:var(--accent); color:#fff;}
@@ -57,14 +58,15 @@
   <header>
     <div>
       <h1>좋은삼선병원 QPS 약제급여 적정성평가 시스템</h1>
-      <div class="sub">의사별 요약 엑셀 전용 판독 엔진 적용본 (v3.1)</div>
+      <div class="sub">업로드 막힘 현상 완전 해결본 (v3.2)</div>
     </div>
     <button class="ghost" style="font-size:12px; padding:6px 12px;" id="resetBtn">이력 전체 초기화</button>
   </header>
 
   <div class="control-tower">
-    <div class="upload-box" id="uploadBox">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기 클릭)</div>
+    <label class="upload-box" id="uploadBox" for="fileInput">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기를 클릭하세요)</label>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+    
     <div>
       <label style="font-size:11px; font-weight:700; color:#475569;">2단계: 데이터 조회 연월</label>
       <input type="month" id="pendingMonth" class="input-sm">
@@ -169,7 +171,7 @@
   <div id="tab4" class="tab-content">
     <section>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0; border:none;">📋 QPS 정례 위원회 보고서 서식 (클릭 후 직접 타이핑 편집 가능✍️)</h2>
+        <h2 style="margin:0; border:none;">📋 QPS 정례 위원회 보고서 서식 (직접 타이핑 편집 가능✍️)</h2>
         <button id="exportBtn">Word 파일 자율 배포용 다운로드</button>
       </div>
       <div class="report-view" id="reportViewZone" contenteditable="true">
@@ -232,11 +234,8 @@ function renderAll(){
   const docList = docListRaw.map(d => {
     const docName = d.의사 || '미상';
     if(!doctorCodeMap[docName]) { doctorCodeMap[docName] = '처방의_' + String.fromCharCode(65 + (cIdx % 26)) + cIdx; cIdx++; }
-    
-    // 상대지수 실시간 연산
     let idxVal = null;
     if(d.dc !== null) idxVal = d.dc / targetAvg;
-
     return {
       dept: d.진료과, name: docName, code: doctorCodeMap[docName], op: d.op,
       dc: d.dc, idx: idxVal, inj: d.inj, upAnti: d.upAnti, loAnti: d.loAnti, gi: d.gi, six: d.six
@@ -245,7 +244,6 @@ function renderAll(){
 
   const renderVal = (val, isPct = false) => val !== null ? val.toFixed(1) + (isPct ? '%' : '') : '<span style="color:#cbd5e1;">-</span>';
 
-  // 2번 탭 렌더링
   const docTbody = document.getElementById('doctorTableBody');
   const filteredDocs = docList.filter(d => d.dept.toLowerCase().includes(filterText));
   docTbody.innerHTML = filteredDocs.length ? filteredDocs.map(d => {
@@ -260,7 +258,6 @@ function renderAll(){
     </tr>`;
   }).join('') : `<tr><td colspan="9" style="padding:20px; color:#94a3b8; text-align:center;">조건에 맞는 데이터가 없습니다.</td></tr>`;
 
-  // 3번 탭 렌더링
   const badTbody = document.getElementById('badDoctorTableBody');
   const badDocs = docList.filter(d => (d.inj!==null&&d.inj>2) || (d.upAnti!==null&&d.upAnti>20) || (d.loAnti!==null&&d.loAnti>30) || (d.idx!==null&&d.idx>1.0));
   badTbody.innerHTML = badDocs.length ? badDocs.map(d => {
@@ -275,25 +272,23 @@ function renderAll(){
     </tr>`;
   }).join('') : `<tr><td colspan="9" style="padding:20px; font-weight:bold; color:var(--g1); text-align:center;">🎯 축하합니다. 모든 의사가 1등급 기준선 내부에서 처방 중입니다.</td></tr>`;
 
-  // 진료과별 소화기관용약 최대 처방과 추출
   let maxGiDeptName = "특정 진료과";
   let maxGiDeptRate = 0;
   let deptGiAgg = {};
   docList.forEach(d => {
     if(d.gi !== null) {
       if(!deptGiAgg[d.dept]) deptGiAgg[d.dept] = { sumGi:0, count:0, op:0 };
-      deptGiAgg[d.dept].sumGi += (d.gi * d.op);
+      deptGiAgg[d.dept].sumGi += (d.gi * d.op); 
       deptGiAgg[d.dept].op += d.op;
     }
   });
   for(let k in deptGiAgg) {
-    if(deptGiAgg[k].op > 30) {
+    if(deptGiAgg[k].op > 30) { 
       let avg = deptGiAgg[k].sumGi / deptGiAgg[k].op;
       if(avg > maxGiDeptRate) { maxGiDeptRate = avg; maxGiDeptName = k; }
     }
   }
 
-  // 4번 탭
   document.getElementById('reportViewZone').innerHTML = `
     <div style="font-family:'맑은 고딕',sans-serif; color:#1e293b;">
       <h2 style="text-align:center; font-size:18px; color:var(--navy); margin-bottom:20px;">[QPS실 약제급여 지표 개선 및 자율 조치 협조 요청]</h2>
@@ -312,11 +307,11 @@ function renderAll(){
           <td style="padding:8px; border:1px solid #cbd5e1; color:var(--navy);">${h.mildRate}%</td>
         </tr>
       </table>
-      <p style="font-size:12.5px; color:#475569;">※ <b>평가 진단:</b> 약품목수 및 소화기관용약(전체 ${h.giRate}%) 처방 영역에서 1등급 진입 방어를 위한 감축 조정이 필요합니다. 특히 <b>${maxGiDeptName}</b>의 소화기관용약 처방률이 평균 <b>${maxGiDeptRate.toFixed(1)}%</b>로 관찰되어, 주상병 누락 방지 및 처방 자제 공지가 시급합니다.</p>
+      <p style="font-size:12.5px; color:#475569;">※ <b>평가 진단:</b> 상기도 영역은 양호하나, 약품목수 및 소화기관용약(전체 ${h.giRate}%) 처방 영역에서 1등급 진입 방어를 위한 미세 감축 조정이 필요합니다. 특히 <b>${maxGiDeptName}</b>의 소화기관용약 처방률이 평균 <b>${maxGiDeptRate.toFixed(1)}%</b>로 타 진료과 대비 높게 관찰되어, 주상병 누락 방지 및 처방 자제 공지가 시급합니다.</p>
       <h4 style="font-size:14px; color:var(--navy); margin:15px 0 5px 0;">2. 진료부 공통 질 향상 실천 가이드라인 (Action Item)</h4>
       <ul style="font-size:12.5px; color:#334155; padding-left:20px; line-height:1.8;">
-        <li><b>급성 상·하기도 항생제 사용 절제:</b> 폐렴 합병증이 없는 급성 하기도 감염 시 광범위 항생제 루틴 처방을 최소화해 주십시오.</li>
-        <li><b>소화기관용약(소화제) 처방 일대 제한:</b> 주진단과 인과관계 없는 소화기관용약 처방 지양을 권고드립니다. <b>건당 처방 품목수 3개 이하 유지</b> 시 원내 약제 인센티브를 방어할 수 있습니다.</li>
+        <li><b>급성 상·하기도 항생제 사용 절제:</b> 감기 등 급성 상기도 감염 시 항생제 처방을 지양해 주시고, 폐렴 합병증이 없는 급성 하기도 감염 시 광범위 항생제 루틴 처방을 최소화해 주십시오.</li>
+        <li><b>소화기관용약(소화제) 처방 일대 제한:</b> 주진단과 인과관계 없는 소화기관용약 처방은 지양을 권고드립니다. <b>건당 처방 품목수 3개 이하 유지</b> 시 원내 약제 인센티브를 방어할 수 있습니다.</li>
         <li><b>소화기관용약 주상병 연동 고시:</b> 심평원 산출식 기준에 따라, <b>반드시 소화기계 주상병(K20~K93, C15~C26, M00~M25, M40~M54)</b>이 입력된 경우에만 인정되며 임의 동시 처방은 삭감 요인이 됩니다.</li>
       </ul>
     </div>
@@ -387,7 +382,6 @@ function findHeaderRowIndex(aoa){
   return -1;
 }
 
-// 의사별 실데이터 직접 파싱 로직
 function parseSheet(aoa){
   const hIdx = findHeaderRowIndex(aoa); if(hIdx<0) return [];
   const headerRow = aoa[hIdx].map(c => String(c||'').replace(/\s/g,''));
@@ -398,7 +392,11 @@ function parseSheet(aoa){
   const dcIdx = headerRow.findIndex(c => c.includes('처방건당약품목수'));
   const sixRateIdx = headerRow.findIndex(c => c.includes('6품목이상') && c.includes('비율'));
   const giRateIdx = headerRow.findIndex(c => c.includes('소화기관용약') && c.includes('비율'));
-
+  
+  const injIdx = headerRow.findIndex(c => c.includes('주사제처방률'));
+  const upAntiIdx = headerRow.findIndex(c => c.includes('상기도') && c.includes('처방률'));
+  const loAntiIdx = headerRow.findIndex(c => c.includes('하기도') && c.includes('처방률'));
+  
   const docList = [];
   let currentDept = '기타과';
 
@@ -418,7 +416,9 @@ function parseSheet(aoa){
       dc: dcIdx >= 0 ? num(row[dcIdx]) : null,
       six: sixRateIdx >= 0 ? num(row[sixRateIdx]) : null,
       gi: giRateIdx >= 0 ? num(row[giRateIdx]) : null,
-      inj: null, upAnti: null, loAnti: null
+      inj: injIdx >= 0 ? num(row[injIdx]) : null,
+      upAnti: upAntiIdx >= 0 ? num(row[upAntiIdx]) : null,
+      loAnti: loAntiIdx >= 0 ? num(row[loAntiIdx]) : null
     });
   }
   return docList;
@@ -427,12 +427,18 @@ function parseSheet(aoa){
 function handleFile(file){
   const reader = new FileReader();
   reader.onload = (e)=>{
-    const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, {type:'array'});
-    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true});
-    fileDataCached = { hiraSummary: parseHiraSummary(aoa), docList: parseSheet(aoa) };
-    document.getElementById('fileNameDisplay').textContent = `📄 리소스 대기 완료: ${file.name}`;
+    try {
+      const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, {type:'array'});
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true});
+      fileDataCached = { hiraSummary: parseHiraSummary(aoa), docList: parseSheet(aoa) };
+      document.getElementById('fileNameDisplay').textContent = `📄 리소스 대기 완료: ${file.name}`;
+    } catch(err) {
+      alert("엑셀 파일을 읽는 도중 오류가 발생했습니다.");
+    }
   };
   reader.readAsArrayBuffer(file);
+  // 같은 파일 재업로드 시 이벤트 재발동을 위함
+  document.getElementById('fileInput').value = '';
 }
 
 function processGenerate(){
@@ -456,12 +462,18 @@ function init(){
   document.getElementById('groupAvgItems').addEventListener('input', e=>{ state.groupAvgItems = e.target.value; saveState(); renderAll(); });
   document.getElementById('filterInput').addEventListener('input', renderAll);
   document.getElementById('maskingCheck').addEventListener('change', renderAll);
-  const uploadBox = document.getElementById('uploadBox'); const fileInput = document.getElementById('fileInput');
-  uploadBox.onclick = function(e) { e.preventDefault(); fileInput.click(); };
+  
+  const uploadBox = document.getElementById('uploadBox'); 
+  const fileInput = document.getElementById('fileInput');
+  
+  // 브라우저 차단을 막기 위해 label 포커싱 방식으로 파일창 오픈 (네이티브 방식)
+  uploadBox.onclick = function() { fileInput.click(); };
   fileInput.onchange = function(e) { if(e.target.files.length) handleFile(e.target.files[0]); };
-  uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.style.background = '#edf2f7'; });
+  
+  uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.style.background = '#dbeafe'; });
   uploadBox.addEventListener('dragleave', () => { uploadBox.style.background = 'var(--accent-soft)'; });
   uploadBox.addEventListener('drop', e => { e.preventDefault(); uploadBox.style.background = 'var(--accent-soft)'; if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+  
   document.getElementById('generateBtn').onclick = processGenerate;
   document.getElementById('exportBtn').onclick = exportWord;
   document.getElementById('resetBtn').onclick = function() { if(confirm('이력 전체 리셋?')){ localStorage.removeItem(STORAGE_KEY); doctorCodeMap={}; location.reload(); } };
