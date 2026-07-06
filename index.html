@@ -40,8 +40,7 @@
   td.name{text-align:left; font-weight:700; background:#f8fafc;}
   .tablewrap{max-height:450px; overflow-y:auto; border:1px solid var(--line); border-radius:10px;}
   
-  /* 업로드 박스를 label 태그로 변경하여 클릭 보장 */
-  .upload-box{ display: block; border: 2px dashed var(--accent); border-radius:10px; padding:18px; text-align:center; color:var(--accent); cursor:pointer; background:var(--accent-soft); font-size:13px; font-weight:700; flex:1; min-width:250px; }
+  .upload-box{ border: 2px dashed var(--accent); border-radius:10px; padding:18px; text-align:center; color:var(--accent); cursor:pointer; background:var(--accent-soft); font-size:13px; font-weight:700; flex:1; min-width:250px; }
   .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0;}
   .chip{ padding:4px 10px; background:#e2e8f0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; color:#475569; }
   .chip.active{background:var(--accent); color:#fff;}
@@ -58,15 +57,14 @@
   <header>
     <div>
       <h1>좋은삼선병원 QPS 약제급여 적정성평가 시스템</h1>
-      <div class="sub">업로드 막힘 현상 완전 해결본 (v3.2)</div>
+      <div class="sub">파일 업로드 무한 인식 및 안정성 패치본 (v3.2)</div>
     </div>
     <button class="ghost" style="font-size:12px; padding:6px 12px;" id="resetBtn">이력 전체 초기화</button>
   </header>
 
   <div class="control-tower">
-    <label class="upload-box" id="uploadBox" for="fileInput">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기를 클릭하세요)</label>
+    <div class="upload-box" id="uploadBox">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기 클릭)</div>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
-    
     <div>
       <label style="font-size:11px; font-weight:700; color:#475569;">2단계: 데이터 조회 연월</label>
       <input type="month" id="pendingMonth" class="input-sm">
@@ -171,7 +169,7 @@
   <div id="tab4" class="tab-content">
     <section>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h2 style="margin:0; border:none;">📋 QPS 정례 위원회 보고서 서식 (직접 타이핑 편집 가능✍️)</h2>
+        <h2 style="margin:0; border:none;">📋 QPS 정례 위원회 보고서 서식 (클릭 후 직접 타이핑 편집 가능✍️)</h2>
         <button id="exportBtn">Word 파일 자율 배포용 다운로드</button>
       </div>
       <div class="report-view" id="reportViewZone" contenteditable="true">
@@ -184,7 +182,7 @@
 
 <script>
 Chart.register(ChartDataLabels);
-const STORAGE_KEY = 'qps_samsun_master_v3_1';
+const STORAGE_KEY = 'qps_samsun_master_v3_2';
 let state = { groupAvgItems: 3.43, monthlyData: {}, selectedMonth: null };
 let fileDataCached = null; let doctorCodeMap = {}; let myCharts = {};
 
@@ -307,11 +305,11 @@ function renderAll(){
           <td style="padding:8px; border:1px solid #cbd5e1; color:var(--navy);">${h.mildRate}%</td>
         </tr>
       </table>
-      <p style="font-size:12.5px; color:#475569;">※ <b>평가 진단:</b> 상기도 영역은 양호하나, 약품목수 및 소화기관용약(전체 ${h.giRate}%) 처방 영역에서 1등급 진입 방어를 위한 미세 감축 조정이 필요합니다. 특히 <b>${maxGiDeptName}</b>의 소화기관용약 처방률이 평균 <b>${maxGiDeptRate.toFixed(1)}%</b>로 타 진료과 대비 높게 관찰되어, 주상병 누락 방지 및 처방 자제 공지가 시급합니다.</p>
+      <p style="font-size:12.5px; color:#475569;">※ <b>평가 진단:</b> 약품목수 및 소화기관용약(전체 ${h.giRate}%) 처방 영역에서 1등급 진입 방어를 위한 미세 감축 조정이 필요합니다. 특히 <b>${maxGiDeptName}</b>의 소화기관용약 처방률이 평균 <b>${maxGiDeptRate.toFixed(1)}%</b>로 타 진료과 대비 높게 관찰되어, 주상병 누락 방지 및 처방 자제 공지가 시급합니다.</p>
       <h4 style="font-size:14px; color:var(--navy); margin:15px 0 5px 0;">2. 진료부 공통 질 향상 실천 가이드라인 (Action Item)</h4>
       <ul style="font-size:12.5px; color:#334155; padding-left:20px; line-height:1.8;">
-        <li><b>급성 상·하기도 항생제 사용 절제:</b> 감기 등 급성 상기도 감염 시 항생제 처방을 지양해 주시고, 폐렴 합병증이 없는 급성 하기도 감염 시 광범위 항생제 루틴 처방을 최소화해 주십시오.</li>
-        <li><b>소화기관용약(소화제) 처방 일대 제한:</b> 주진단과 인과관계 없는 소화기관용약 처방은 지양을 권고드립니다. <b>건당 처방 품목수 3개 이하 유지</b> 시 원내 약제 인센티브를 방어할 수 있습니다.</li>
+        <li><b>급성 상·하기도 항생제 사용 절제:</b> 폐렴 합병증이 없는 급성 하기도 감염 시 광범위 항생제 루틴 처방을 최소화해 주십시오.</li>
+        <li><b>소화기관용약(소화제) 처방 일대 제한:</b> 주진단과 인과관계 없는 소화기관용약 처방 지양을 권고드립니다. <b>건당 처방 품목수 3개 이하 유지</b> 시 원내 약제 인센티브를 방어할 수 있습니다.</li>
         <li><b>소화기관용약 주상병 연동 고시:</b> 심평원 산출식 기준에 따라, <b>반드시 소화기계 주상병(K20~K93, C15~C26, M00~M25, M40~M54)</b>이 입력된 경우에만 인정되며 임의 동시 처방은 삭감 요인이 됩니다.</li>
       </ul>
     </div>
@@ -437,8 +435,6 @@ function handleFile(file){
     }
   };
   reader.readAsArrayBuffer(file);
-  // 같은 파일 재업로드 시 이벤트 재발동을 위함
-  document.getElementById('fileInput').value = '';
 }
 
 function processGenerate(){
@@ -458,6 +454,7 @@ function exportWord(){
 
 function init(){
   loadState();
+  
   document.getElementById('groupAvgItems').value = state.groupAvgItems;
   document.getElementById('groupAvgItems').addEventListener('input', e=>{ state.groupAvgItems = e.target.value; saveState(); renderAll(); });
   document.getElementById('filterInput').addEventListener('input', renderAll);
@@ -466,8 +463,11 @@ function init(){
   const uploadBox = document.getElementById('uploadBox'); 
   const fileInput = document.getElementById('fileInput');
   
-  // 브라우저 차단을 막기 위해 label 포커싱 방식으로 파일창 오픈 (네이티브 방식)
-  uploadBox.onclick = function() { fileInput.click(); };
+  // 브라우저 차단을 막기 위해 label 포커싱 방식으로 파일창 오픈 (가장 확실한 네이티브 방식)
+  uploadBox.onclick = function() {
+    fileInput.value = ''; // 같은 파일 재업로드를 위해 초기화 추가
+    fileInput.click(); 
+  };
   fileInput.onchange = function(e) { if(e.target.files.length) handleFile(e.target.files[0]); };
   
   uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.style.background = '#dbeafe'; });
@@ -477,6 +477,7 @@ function init(){
   document.getElementById('generateBtn').onclick = processGenerate;
   document.getElementById('exportBtn').onclick = exportWord;
   document.getElementById('resetBtn').onclick = function() { if(confirm('이력 전체 리셋?')){ localStorage.removeItem(STORAGE_KEY); doctorCodeMap={}; location.reload(); } };
+  
   renderAll();
 }
 init();
