@@ -40,6 +40,7 @@
   td.name{text-align:left; font-weight:700; background:#f8fafc;}
   .tablewrap{max-height:450px; overflow-y:auto; border:1px solid var(--line); border-radius:10px;}
   
+  .upload-box{ border: 2px dashed var(--accent); border-radius:10px; padding:18px; text-align:center; color:var(--accent); cursor:pointer; background:var(--accent-soft); font-size:13px; font-weight:700; flex:1; min-width:250px; }
   .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0;}
   .chip{ padding:4px 10px; background:#e2e8f0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; color:#475569; }
   .chip.active{background:var(--accent); color:#fff;}
@@ -56,16 +57,14 @@
   <header>
     <div>
       <h1>좋은삼선병원 QPS 약제급여 적정성평가 시스템</h1>
-      <div class="sub">파일 선택 버튼 직접 노출형 (업로드 막힘 현상 완전 해결본 v3.4)</div>
+      <div class="sub">순정 업로드 복구 및 의사별 데이터 연동 최종본 (v3.5)</div>
     </div>
     <button class="ghost" style="font-size:12px; padding:6px 12px;" id="resetBtn">이력 전체 초기화</button>
   </header>
 
   <div class="control-tower">
-    <div id="uploadContainer" style="flex:1; min-width:250px; background:var(--accent-soft); border:2px dashed var(--accent); border-radius:10px; padding:15px; text-align:center;">
-      <div style="font-size:13px; font-weight:700; color:var(--accent); margin-bottom:8px;">📂 1단계: OCS 약제통계 엑셀 파일 선택</div>
-      <input type="file" id="fileInput" accept=".xlsx,.xls" style="font-size:13px; cursor:pointer; width:90%; background:#fff; padding:6px; border:1px solid #cbd5e1; border-radius:4px;">
-    </div>
+    <div class="upload-box" id="uploadBox">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기 클릭)</div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
     
     <div>
       <label style="font-size:11px; font-weight:700; color:#475569;">2단계: 데이터 조회 연월</label>
@@ -184,7 +183,7 @@
 
 <script>
 Chart.register(ChartDataLabels);
-const STORAGE_KEY = 'qps_samsun_master_v3_4';
+const STORAGE_KEY = 'qps_samsun_master_v3_5';
 let state = { groupAvgItems: 3.43, monthlyData: {}, selectedMonth: null };
 let fileDataCached = null; let doctorCodeMap = {}; let myCharts = {};
 
@@ -462,29 +461,14 @@ function init(){
   document.getElementById('filterInput').addEventListener('input', renderAll);
   document.getElementById('maskingCheck').addEventListener('change', renderAll);
   
+  // 가장 확실했던 최초의 순정 업로드 로직으로 복구
+  const uploadBox = document.getElementById('uploadBox'); 
   const fileInput = document.getElementById('fileInput');
-  const uploadContainer = document.getElementById('uploadContainer');
   
-  // 브라우저 기본 클릭 이벤트를 방해하지 않기 위해 파일 초기화만 수행
-  fileInput.addEventListener('click', function() {
-      this.value = null; 
-  });
-  
-  fileInput.addEventListener('change', function(e) {
-      if(e.target.files.length > 0) {
-          handleFile(e.target.files[0]);
-      }
-  });
-  
-  // 드래그 앤 드롭 영역을 컨테이너에 매핑
-  uploadContainer.addEventListener('dragover', e => { e.preventDefault(); uploadContainer.style.background = '#dbeafe'; });
-  uploadContainer.addEventListener('dragleave', () => { uploadContainer.style.background = 'var(--accent-soft)'; });
-  uploadContainer.addEventListener('drop', e => { 
-    e.preventDefault(); 
-    uploadContainer.style.background = 'var(--accent-soft)'; 
-    if(e.dataTransfer.files.length) {
-      handleFile(e.dataTransfer.files[0]);
-    }
+  uploadBox.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => { 
+    if(e.target.files.length) handleFile(e.target.files[0]); 
+    fileInput.value = ''; // 재업로드 버그 방지
   });
   
   document.getElementById('generateBtn').onclick = processGenerate;
