@@ -40,10 +40,6 @@
   td.name{text-align:left; font-weight:700; background:#f8fafc;}
   .tablewrap{max-height:450px; overflow-y:auto; border:1px solid var(--line); border-radius:10px;}
   
-  /* label 태그 스타일 (클릭 영역) */
-  .upload-box{ display: block; border: 2px dashed var(--accent); border-radius:10px; padding:18px; text-align:center; color:var(--accent); cursor:pointer; background:var(--accent-soft); font-size:13px; font-weight:700; flex:1; min-width:250px; transition: 0.2s; }
-  .upload-box:hover { background: #dbeafe; }
-  
   .chip-row{display:flex; flex-wrap:wrap; gap:6px; margin:8px 0;}
   .chip{ padding:4px 10px; background:#e2e8f0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; color:#475569; }
   .chip.active{background:var(--accent); color:#fff;}
@@ -52,9 +48,6 @@
   
   .report-view { background: #ffffff; padding: 30px; border: 2px solid var(--navy); border-radius: 8px; font-size: 14px; color: #1e293b; line-height: 1.8; outline: none; }
   .report-view:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-  
-  /* 실제 파일 인풋은 화면에서 숨김 (하지만 기능은 작동하도록 세팅) */
-  .hidden-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 </style>
 </head>
 <body>
@@ -63,14 +56,16 @@
   <header>
     <div>
       <h1>좋은삼선병원 QPS 약제급여 적정성평가 시스템</h1>
-      <div class="sub">파일 업로드 이중클릭 버그 완벽 수정본 (v3.3)</div>
+      <div class="sub">파일 선택 버튼 직접 노출형 (업로드 막힘 현상 완전 해결본 v3.4)</div>
     </div>
     <button class="ghost" style="font-size:12px; padding:6px 12px;" id="resetBtn">이력 전체 초기화</button>
   </header>
 
   <div class="control-tower">
-    <label class="upload-box" id="uploadBox" for="fileInput">📂 1단계: OCS 약제통계 엑셀 파일 업로드 (여기를 클릭하세요)</label>
-    <input type="file" id="fileInput" class="hidden-file-input" accept=".xlsx,.xls">
+    <div id="uploadContainer" style="flex:1; min-width:250px; background:var(--accent-soft); border:2px dashed var(--accent); border-radius:10px; padding:15px; text-align:center;">
+      <div style="font-size:13px; font-weight:700; color:var(--accent); margin-bottom:8px;">📂 1단계: OCS 약제통계 엑셀 파일 선택</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls" style="font-size:13px; cursor:pointer; width:90%; background:#fff; padding:6px; border:1px solid #cbd5e1; border-radius:4px;">
+    </div>
     
     <div>
       <label style="font-size:11px; font-weight:700; color:#475569;">2단계: 데이터 조회 연월</label>
@@ -189,7 +184,7 @@
 
 <script>
 Chart.register(ChartDataLabels);
-const STORAGE_KEY = 'qps_samsun_master_v3_3';
+const STORAGE_KEY = 'qps_samsun_master_v3_4';
 let state = { groupAvgItems: 3.43, monthlyData: {}, selectedMonth: null };
 let fileDataCached = null; let doctorCodeMap = {}; let myCharts = {};
 
@@ -467,10 +462,10 @@ function init(){
   document.getElementById('filterInput').addEventListener('input', renderAll);
   document.getElementById('maskingCheck').addEventListener('change', renderAll);
   
-  const uploadBox = document.getElementById('uploadBox'); 
   const fileInput = document.getElementById('fileInput');
+  const uploadContainer = document.getElementById('uploadContainer');
   
-  // 브라우저 기본 로직(클릭 시 창 열림)에 방해되지 않도록 onclick 내부에서 초기화만 수행
+  // 브라우저 기본 클릭 이벤트를 방해하지 않기 위해 파일 초기화만 수행
   fileInput.addEventListener('click', function() {
       this.value = null; 
   });
@@ -481,11 +476,12 @@ function init(){
       }
   });
   
-  uploadBox.addEventListener('dragover', e => { e.preventDefault(); uploadBox.style.background = '#dbeafe'; });
-  uploadBox.addEventListener('dragleave', () => { uploadBox.style.background = 'var(--accent-soft)'; });
-  uploadBox.addEventListener('drop', e => { 
+  // 드래그 앤 드롭 영역을 컨테이너에 매핑
+  uploadContainer.addEventListener('dragover', e => { e.preventDefault(); uploadContainer.style.background = '#dbeafe'; });
+  uploadContainer.addEventListener('dragleave', () => { uploadContainer.style.background = 'var(--accent-soft)'; });
+  uploadContainer.addEventListener('drop', e => { 
     e.preventDefault(); 
-    uploadBox.style.background = 'var(--accent-soft)'; 
+    uploadContainer.style.background = 'var(--accent-soft)'; 
     if(e.dataTransfer.files.length) {
       handleFile(e.dataTransfer.files[0]);
     }
